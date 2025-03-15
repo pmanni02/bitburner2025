@@ -8,10 +8,6 @@ import { BASIC_SCRIPT_RAM_SIZE, RAM_CHOICES, TARGET_SERVER } from "/globals";
 const myWindow = eval("window") as Window & typeof globalThis;
 const React = myWindow.React;
 
-let initialHackServers: string[] = [];
-let initialGrowServers: string[] = ["n00dles", "foodnstuff", "sigma-cosmetics", "hong-fang-tea"];
-let initialWeakenServers: string[] = ["joesguns", "harakiri-sushi"];
-
 let numHackThreads = 0;
 let numWeakenThreads = 0;
 let numGrowThreads = 0;
@@ -22,25 +18,25 @@ let numGrowThreads = 0;
  */
 export async function main(ns: NS): Promise<void> {
   const args = ns.args;
-  ns.tprint("args: "+ args)
-  if (args && args[0] === "fromConfig") {
-    const data = readServerConfig(ns);
-    ns.tprint(data)
-    initialGrowServers = data["growServers"];
-    initialHackServers = data["hackServers"];
-    initialWeakenServers = data["weakenServers"];
+  ns.tprint("args: " + args)
+  const config: LoopHackConfig = readServerConfig(ns);
+  if (args && args[0] === "init") {
+    config.growServers = ["n00dles", "foodnstuff", "sigma-cosmetics", "hong-fang-tea"];
+    config.hackServers = [];
+    config.weakenServers = ["joesguns", "harakiri-sushi"];
+    saveCurrentServers(ns, config);
   }
 
-  ns.disableLog("ALL"); 
+  ns.disableLog("ALL");
 
   if (ns.fileExists("BruteSSH.exe", "home")) {
     ns.brutessh(TARGET_SERVER);
   }
   ns.nuke(TARGET_SERVER);
 
-  await deployInitialScript(ns, "/basicFns/hack.js", initialHackServers);
-  await deployInitialScript(ns, "/basicFns/grow.js", initialGrowServers);
-  await deployInitialScript(ns, "/basicFns/weaken.js", initialWeakenServers);
+  await deployInitialScript(ns, "/basicFns/hack.js", config.hackServers);
+  await deployInitialScript(ns, "/basicFns/grow.js", config.growServers);
+  await deployInitialScript(ns, "/basicFns/weaken.js", config.weakenServers);
 
   // OPEN UI FOR MONITORING TARGET SERVE
   if (!ns.getRunningScript("/ui/monitorUI.js", "home")) {
@@ -69,13 +65,29 @@ async function deployInitialScript(ns: NS, script: string, initialServers: strin
     }
     ns.nuke(curServ);
     ns.scp(script, curServ);
-    ns.exec(script, curServ, numThreads  - 1, TARGET_SERVER);
+    ns.exec(script, curServ, numThreads, TARGET_SERVER);
     updateGlobalNumThreads(numThreads, script)
     await ns.sleep(Math.random() * 500);
   }
 }
 
-function replaceScript(ns: NS, serverName: string | undefined, scriptToKill: string, scriptToStart: string) {
+function replaceScript(ns: NS, scriptToKill: string, scriptToStart: string) {
+  const config: LoopHackConfig = readServerConfig(ns);
+
+  let serverName;
+  if (scriptToKill === "/basicFns/grow.js") {
+    serverName = config.growServers.pop();
+  } else if (scriptToKill === "/basicFns/hack.js") {
+    if (config.hackServers.length) {
+      serverName = config.hackServers.pop()
+    } else {
+      serverName = config.weakenServers.pop()
+    }
+  } else if (scriptToKill === "/basicFns/weaken.js") {
+    serverName = config.weakenServers.pop()
+  }
+  saveCurrentServers(ns, config)
+
   ns.toast("redeploying from " + scriptToKill + " to " + scriptToStart);
   if (serverName) {
     if (ns.killall(serverName)) {
@@ -88,13 +100,16 @@ function replaceScript(ns: NS, serverName: string | undefined, scriptToKill: str
     ns.exec(scriptToStart, serverName, numThreads, TARGET_SERVER);
     updateGlobalNumThreads(-numThreads, scriptToKill)
 
+    const config: LoopHackConfig = readServerConfig(ns);
+
     if (scriptToStart === "/basicFns/hack.js") {
-      initialHackServers.unshift(serverName);
+      config["hackServers"].unshift(serverName);
     } else if (scriptToStart === "/basicFns/grow.js") {
-      initialGrowServers.unshift(serverName);
+      config["growServers"].unshift(serverName);
     } else if (scriptToStart === "/basicFns/weaken.js") {
-      initialWeakenServers.unshift(serverName);
+      config["weakenServers"].unshift(serverName);
     }
+    saveCurrentServers(ns, config);
     updateGlobalNumThreads(numThreads, scriptToStart)
   }
 }
@@ -104,12 +119,13 @@ async function openHackUI(ns: NS) {
   ns.ui.resizeTail(360, 355);
   while (ns.scriptRunning("/ui/loopHackUI.js", "home")) {
     ns.clearLog();
-    ns.printRaw(getHTML(ns, initialHackServers, initialGrowServers, initialWeakenServers));
+    const config: LoopHackConfig = readServerConfig(ns);
+    ns.printRaw(getHTML(ns, config));
     await ns.asleep(500);
   }
 }
 
-function getHTML(ns: NS, hackServers: string[], growServers: string[], weakenServers: string[]) {
+function getHTML(ns: NS, config: LoopHackConfig) {
   return (
     <html>
       <head>
@@ -118,21 +134,21 @@ function getHTML(ns: NS, hackServers: string[], growServers: string[], weakenSer
       <body>
         <div id="hack-div">
           <h3>Hack Servers: {[numHackThreads]}</h3>
-          {addButton("Add Hack", "addHack", () => replaceScript(ns, initialGrowServers.pop(), "/basicFns/grow.js", "/basicFns/hack.js"))}
-          {makeList(hackServers)}
+          {addButton("Add Hack", "addHack", () => replaceScript(ns, "/basicFns/grow.js", "/basicFns/hack.js"))}
+          {makeList(config.hackServers)}
         </div>
 
         <div id="grow-div">
           <h3>Grow Servers: {[numGrowThreads]}</h3>
-          {addButton("Add Grow", "addGrow", () => replaceScript(ns, initialHackServers.length ? initialHackServers.pop() : initialWeakenServers.pop(), "/basicFns/hack.js", "/basicFns/grow.js"))}
-          {makeList(growServers)}
+          {addButton("Add Grow", "addGrow", () => replaceScript(ns, "/basicFns/hack.js", "/basicFns/grow.js"))}
+          {makeList(config.growServers)}
         </div>
 
         <div id="weaken-div">
           <h3>Weaken Servers: {[numWeakenThreads]}</h3>
-          {addButton("Add Weaken", "addWeaken", () => replaceScript(ns, initialGrowServers.pop(), "/basicFns/grow.js", "/basicFns/weaken.js"))}
-          {addButton("Remove Weaken", "removeWeaken", () => replaceScript(ns, initialWeakenServers.pop(), "/basicFns/weaken.js", "/basicFns/grow.js"))}
-          {makeList(weakenServers)}
+          {addButton("Add Weaken", "addWeaken", () => replaceScript(ns, "/basicFns/grow.js", "/basicFns/weaken.js"))}
+          {addButton("Remove Weaken", "removeWeaken", () => replaceScript(ns, "/basicFns/weaken.js", "/basicFns/grow.js"))}
+          {makeList(config.weakenServers)}
         </div>
 
         <br></br>
@@ -142,7 +158,7 @@ function getHTML(ns: NS, hackServers: string[], growServers: string[], weakenSer
 
         <br></br>
         {addButton("Add Server", "addServer", () => addNewServer(ns))}
-        {addButton("Save Servers", "saveServers", () => saveCurrentServers(ns))}
+        {addButton("Save Servers", "saveServers", () => saveCurrentServers(ns, config))}
       </body>
     </html>
   )
@@ -150,6 +166,7 @@ function getHTML(ns: NS, hackServers: string[], growServers: string[], weakenSer
 
 async function buyNewServer(ns: NS) {
   ns.toast("buying server...");
+  const config: LoopHackConfig = readServerConfig(ns);
 
   const serverSize = await ns.prompt("Please select the server size", {
     type: "select",
@@ -165,21 +182,24 @@ async function buyNewServer(ns: NS) {
     const numThreads = Math.floor(ram / BASIC_SCRIPT_RAM_SIZE);
 
     ns.scp("/basicFns/grow.js", newServer);
-    ns.exec("/basicFns/grow.js", newServer, numThreads, TARGET_SERVER);
-    updateGlobalNumThreads(numThreads, "/basicFns/grow.js")
+    ns.exec("/basicFns/grow.js", newServer, numThreads - 1, TARGET_SERVER);
+    updateGlobalNumThreads(numThreads - 1, "/basicFns/grow.js")
     ns.tprint("deployed new server: " + newServer + " with grow script");
-    initialGrowServers.unshift(newServer);
+
+    config.growServers.unshift(newServer);
+    saveCurrentServers(ns, config)
   } else {
     ns.toast("at purchased server limit or not enough funds")
   }
-  ns.toast("bought server costing: " + ns.getPurchasedServerCost(ram))
+  ns.tprint("bought server costing: " + ns.getPurchasedServerCost(ram))
 }
 
 function addNewServer(ns: NS) {
-  ns.toast("adding server...")
+  ns.toast("adding server...");
+  const config: LoopHackConfig = readServerConfig(ns);
 
   const potentialServersToHack = getServersReadyToUseForHacking(ns, true);
-  const currentServers = [...initialGrowServers, ...initialHackServers, ...initialWeakenServers];
+  const currentServers = [...config.growServers, ...config.hackServers, ...config.weakenServers];
 
   const toBeHacked = potentialServersToHack.filter((serv) => {
     return !currentServers.includes(serv.hostname)
@@ -212,24 +232,18 @@ function addNewServer(ns: NS) {
     ns.nuke(newServer.hostname);
 
     ns.scp("/basicFns/grow.js", newServer.hostname);
-    ns.exec("/basicFns/grow.js", newServer.hostname, numThreads, TARGET_SERVER);
+    ns.exec("/basicFns/grow.js", newServer.hostname, numThreads - 1, TARGET_SERVER);
     updateGlobalNumThreads(numThreads, "/basicFns/grow.js")
+
     ns.tprint("deployed new server: " + newServer.hostname + " with grow script");
-    initialGrowServers.unshift(newServer.hostname);
+    config.growServers.unshift(newServer.hostname);
+    saveCurrentServers(ns, config);
   }
 }
 
-function saveCurrentServers(ns: NS) {
+function saveCurrentServers(ns: NS, config: LoopHackConfig) {
   ns.toast("Saving current servers...");
-
-  const loopHackConfig: LoopHackConfig = {
-    targetServer: TARGET_SERVER,
-    hackServers: initialHackServers,
-    weakenServers: initialWeakenServers,
-    growServers: initialGrowServers
-  }
-
-  ns.write("loopHackConfig.json", JSON.stringify(loopHackConfig), "w");
+  ns.write("loopHackConfig.json", JSON.stringify(config), "w");
 }
 
 async function upgradePurchasedServer(ns: NS) {
@@ -254,27 +268,26 @@ async function upgradePurchasedServer(ns: NS) {
     ns.renamePurchasedServer(serverInput.toString(), newName)
     ns.toast("upgraded server " + serverInput.toString() + " with " + newRam);
 
-    // refresh server lists
-    // find script type
-    const isHackScript = initialHackServers.includes(serverInput.toString());
-    const isWeakenScript = initialWeakenServers.includes(serverInput.toString());
-    const isGrowScript = initialGrowServers.includes(serverInput.toString());
+    const config: LoopHackConfig = readServerConfig(ns);
+
+    const isHackScript = config.hackServers.includes(serverInput.toString());
+    const isWeakenScript = config.weakenServers.includes(serverInput.toString());
+    const isGrowScript = config.growServers.includes(serverInput.toString());
 
     if (isHackScript) {
-      const index = initialHackServers.findIndex((s) => s === serverInput.toString());
-      initialHackServers.splice(index, 1);
-      initialHackServers.push(newName);
-    } else if(isWeakenScript) {
-      const index = initialWeakenServers.findIndex((s) => s === serverInput.toString());
-      initialWeakenServers.splice(index, 1);
-      initialWeakenServers.push(newName);
-    } else if(isGrowScript) {
-      const index = initialGrowServers.findIndex((s) => s === serverInput.toString());
-      initialGrowServers.splice(index, 1);
-      initialGrowServers.push(newName);
+      const index = config.hackServers.findIndex((s) => s === serverInput.toString());
+      config.hackServers.splice(index, 1);
+      config.hackServers.push(newName);
+    } else if (isWeakenScript) {
+      const index = config.weakenServers.findIndex((s) => s === serverInput.toString());
+      config.weakenServers.splice(index, 1);
+      config.weakenServers.push(newName);
+    } else if (isGrowScript) {
+      const index = config.growServers.findIndex((s) => s === serverInput.toString());
+      config.growServers.splice(index, 1);
+      config.growServers.push(newName);
     }
-
-    saveCurrentServers(ns);
+    saveCurrentServers(ns, config);
   } else {
     ns.toast("something went wrong with server upgrade");
   }
