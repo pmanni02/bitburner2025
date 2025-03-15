@@ -1,15 +1,13 @@
 import { NS } from "@ns";
 import { getServersReadyToUseForHacking, readServerConfig } from "../helpers";
 import { LoopHackConfig } from "../interfaces/global";
+import { BASIC_SCRIPT_RAM_SIZE, RAM_CHOICES, TARGET_SERVER } from "/globals";
 
 /*eslint no-constant-condition: */
 
 const myWindow = eval("window") as Window & typeof globalThis;
 const React = myWindow.React;
 
-const RAM_CHOICES = ["8", "16", "32", "64", "128"];
-
-const targetServer = "silver-helix";
 let initialHackServers: string[] = [];
 let initialGrowServers: string[] = ["n00dles", "foodnstuff", "sigma-cosmetics", "hong-fang-tea"];
 let initialWeakenServers: string[] = ["joesguns", "harakiri-sushi"];
@@ -17,8 +15,6 @@ let initialWeakenServers: string[] = ["joesguns", "harakiri-sushi"];
 let numHackThreads = 0;
 let numWeakenThreads = 0;
 let numGrowThreads = 0;
-
-const scriptRAMSize = 1.7; // each script (grow, weaken, hack) is 1.7GB RAM
 
 /**
  * Main fn - deploys initial scripts and opens UI
@@ -38,9 +34,9 @@ export async function main(ns: NS): Promise<void> {
   ns.disableLog("ALL"); 
 
   if (ns.fileExists("BruteSSH.exe", "home")) {
-    ns.brutessh(targetServer);
+    ns.brutessh(TARGET_SERVER);
   }
-  ns.nuke(targetServer);
+  ns.nuke(TARGET_SERVER);
 
   await deployInitialScript(ns, "/basicFns/hack.js", initialHackServers);
   await deployInitialScript(ns, "/basicFns/grow.js", initialGrowServers);
@@ -48,11 +44,11 @@ export async function main(ns: NS): Promise<void> {
 
   // OPEN UI FOR MONITORING TARGET SERVE
   if (!ns.getRunningScript("/ui/monitorUI.js", "home")) {
-    ns.exec("/ui/monitorUI.js", "home", undefined, targetServer);
+    ns.exec("/ui/monitorUI.js", "home", undefined, TARGET_SERVER);
   }
 
   // OPEN UI TO LIST SEVERS & MANUALLY BALANCE SCRIPTS
-  await openHackUI(ns)
+  await openHackUI(ns);
 }
 
 /**
@@ -66,17 +62,16 @@ async function deployInitialScript(ns: NS, script: string, initialServers: strin
   for (let i = 0; i < initialServers.length; i++) {
     const curServ = initialServers[i];
     const { maxRam, ramUsed } = ns.getServer(curServ);
-    const numThreads = Math.floor((maxRam - ramUsed) / scriptRAMSize);
+    const numThreads = Math.floor((maxRam - ramUsed) / BASIC_SCRIPT_RAM_SIZE);
 
     if (ns.fileExists("BruteSSH.exe", "home")) {
       ns.brutessh(curServ);
     }
     ns.nuke(curServ);
     ns.scp(script, curServ);
-    ns.exec(script, curServ, numThreads, targetServer);
+    ns.exec(script, curServ, numThreads  - 1, TARGET_SERVER);
     updateGlobalNumThreads(numThreads, script)
-    // ns.print("deployed " + script + " " + curServ)
-    await ns.sleep(Math.random() * 1000)
+    await ns.sleep(Math.random() * 500);
   }
 }
 
@@ -87,13 +82,10 @@ function replaceScript(ns: NS, serverName: string | undefined, scriptToKill: str
       ns.rm(scriptToKill, serverName);
     }
     const { maxRam, ramUsed } = ns.getServer(serverName);
-    // ns.print("maxRam: ", maxRam, " ramUsed: ", ramUsed);
-    const numThreads = Math.floor((maxRam - ramUsed) / scriptRAMSize);
+    const numThreads = Math.floor((maxRam - ramUsed) / BASIC_SCRIPT_RAM_SIZE);
 
-    ns.scp(scriptToStart, serverName)
-    ns.exec(scriptToStart, serverName, numThreads, targetServer)
-    // ns.print("redeployed from " + scriptToKill + " to " + scriptToStart)
-
+    ns.scp(scriptToStart, serverName);
+    ns.exec(scriptToStart, serverName, numThreads, TARGET_SERVER);
     updateGlobalNumThreads(-numThreads, scriptToKill)
 
     if (scriptToStart === "/basicFns/hack.js") {
@@ -113,7 +105,7 @@ async function openHackUI(ns: NS) {
   while (ns.scriptRunning("/ui/loopHackUI.js", "home")) {
     ns.clearLog();
     ns.printRaw(getHTML(ns, initialHackServers, initialGrowServers, initialWeakenServers));
-    await ns.asleep(1000);
+    await ns.asleep(500);
   }
 }
 
@@ -170,10 +162,10 @@ async function buyNewServer(ns: NS) {
   if (purchasedServers.length < ns.getPurchasedServerLimit() && canPurchase) {
     const serverNum = purchasedServers.length ? purchasedServers.length : 0;
     const newServer = ns.purchaseServer('serv-' + ram + '-' + serverNum, ram);
-    const numThreads = Math.floor(ram / scriptRAMSize);
+    const numThreads = Math.floor(ram / BASIC_SCRIPT_RAM_SIZE);
 
     ns.scp("/basicFns/grow.js", newServer);
-    ns.exec("/basicFns/grow.js", newServer, numThreads, targetServer);
+    ns.exec("/basicFns/grow.js", newServer, numThreads, TARGET_SERVER);
     updateGlobalNumThreads(numThreads, "/basicFns/grow.js")
     ns.tprint("deployed new server: " + newServer + " with grow script");
     initialGrowServers.unshift(newServer);
@@ -187,14 +179,12 @@ function addNewServer(ns: NS) {
   ns.toast("adding server...")
 
   const potentialServersToHack = getServersReadyToUseForHacking(ns, true);
-  // ns.tprint(potentialServersToHack)
   const currentServers = [...initialGrowServers, ...initialHackServers, ...initialWeakenServers];
 
   const toBeHacked = potentialServersToHack.filter((serv) => {
     return !currentServers.includes(serv.hostname)
   });
 
-  // ns.tprint("candidates: ", toBeHacked);
   if (!toBeHacked.length) {
     ns.tprint("NO MORE AVAILABLE SERVERS TO HACK!");
     return;
@@ -202,7 +192,7 @@ function addNewServer(ns: NS) {
 
   const newServer = toBeHacked.shift();
   if (newServer && newServer.hostname) {
-    const numThreads = Math.floor(newServer?.maxRam / scriptRAMSize);
+    const numThreads = Math.floor(newServer?.maxRam / BASIC_SCRIPT_RAM_SIZE);
 
     if (ns.fileExists("BruteSSH.exe", "home")) {
       ns.brutessh(newServer.hostname);
@@ -222,7 +212,7 @@ function addNewServer(ns: NS) {
     ns.nuke(newServer.hostname);
 
     ns.scp("/basicFns/grow.js", newServer.hostname);
-    ns.exec("/basicFns/grow.js", newServer.hostname, numThreads, targetServer);
+    ns.exec("/basicFns/grow.js", newServer.hostname, numThreads, TARGET_SERVER);
     updateGlobalNumThreads(numThreads, "/basicFns/grow.js")
     ns.tprint("deployed new server: " + newServer.hostname + " with grow script");
     initialGrowServers.unshift(newServer.hostname);
@@ -233,7 +223,7 @@ function saveCurrentServers(ns: NS) {
   ns.toast("Saving current servers...");
 
   const loopHackConfig: LoopHackConfig = {
-    targetServer,
+    targetServer: TARGET_SERVER,
     hackServers: initialHackServers,
     weakenServers: initialWeakenServers,
     growServers: initialGrowServers
