@@ -1,5 +1,5 @@
 import { NS, Server } from "@ns";
-import { ServerFile } from "./interfaces/global";
+import { LoopHackConfig, ServerFile } from "./interfaces/global";
 
 /**
  * @param ns @param {AutocompleteData} data
@@ -66,7 +66,7 @@ function exportToFile(ns: NS, data: Server[] | ServerFile[], filename: string): 
  * @param ns Netscript
  * @returns {Server[]} Array of Server objects
  */
-export function importServerList(ns: NS): Server[] | null{
+export function importServerList(ns: NS): Server[] | null {
   const serverArrayString = ns.read("serverList.json");
   return serverArrayString ? JSON.parse(serverArrayString) : null;
 }
@@ -166,7 +166,12 @@ async function printCodingContracts(ns: NS) {
   }
 }
 
-export function readServerConfig(ns: NS) {
+export function readServerConfig(ns: NS): LoopHackConfig[] {
   const data = ns.read("loopHackConfig.json");
-  return data ? JSON.parse(data) : {}
+  return data ? JSON.parse(data) : []
+}
+
+export function saveCurrentServers(ns: NS, config: LoopHackConfig) {
+  ns.toast("Saving current servers...");
+  ns.write("loopHackConfig.json", "["+JSON.stringify(config)+"]", "w");
 }
