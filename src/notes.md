@@ -29,3 +29,13 @@
 1. master (main)
 2. loopHackV2 (UI and script updates to loopHack script)
 3. contracts (coding contract changes)
+
+// INITIAL HACK SETUP
+[
+  {
+    "targetServer": "silver-helix",
+    "hackServers": [],
+    "growServers": ["n00dles", "foodnstuff", "sigma-cosmetics", "hong-fang-tea"],
+    "weakenServers": ["joesguns", "harakiri-sushi"]
+  }
+]
