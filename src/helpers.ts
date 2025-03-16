@@ -1,5 +1,5 @@
 import { NS, Server } from "@ns";
-import { LoopHackConfig, ServerFile } from "./interfaces/global";
+import { LoopHackConfig, ServerFile } from "./utils/interfaces";
 
 /**
  * @param ns @param {AutocompleteData} data
