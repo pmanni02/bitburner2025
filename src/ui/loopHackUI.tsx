@@ -18,7 +18,7 @@ let numGrowThreads = 0;
  */
 export async function main(ns: NS): Promise<void> {
   const args = ns.args;
-  const config = readServerConfig(ns)[0];
+  const config: LoopHackConfig = readServerConfig(ns)[0]
   if (config !== undefined && args && args[0] === "init") {
     config.growServers = ["n00dles", "foodnstuff", "sigma-cosmetics", "hong-fang-tea"];
     config.hackServers = [];
@@ -53,7 +53,7 @@ async function openHackUI(ns: NS) {
     ns.clearLog();
     const config: LoopHackConfig = readServerConfig(ns)[0];
     ns.printRaw(getHTML(ns, config));
-    await ns.asleep(2000);
+    await ns.asleep(10000);
   }
 }
 
@@ -65,22 +65,31 @@ function getHTML(ns: NS, config: LoopHackConfig) {
       </head>
       <body>
         <div id="hack-div">
-          <h3>Hack Servers: {[numHackThreads]}</h3>
+          {/* <h3>Hack Servers: {[numHackThreads]}</h3> */}
           {addButton("Add Hack", "addHack", () => replaceScript(ns, "/basicFns/grow.js", "/basicFns/hack.js"))}
-          {makeList(config.hackServers)}
+          <details open>
+            <summary>Hack Servers</summary>
+            {makeList(config.hackServers)}
+          </details>
         </div>
 
         <div id="grow-div">
-          <h3>Grow Servers: {[numGrowThreads]}</h3>
+          {/* <h3>Grow Servers: {[numGrowThreads]}</h3> */}
           {addButton("Add Grow", "addGrow", () => replaceScript(ns, "/basicFns/hack.js", "/basicFns/grow.js"))}
-          {makeList(config.growServers)}
+          <details open>
+            <summary>Grow Servers</summary>
+            {makeList(config.growServers)}
+          </details>
         </div>
 
         <div id="weaken-div">
-          <h3>Weaken Servers: {[numWeakenThreads]}</h3>
+          {/* <h3>Weaken Servers: {[numWeakenThreads]}</h3> */}
           {addButton("Add Weaken", "addWeaken", () => replaceScript(ns, "/basicFns/grow.js", "/basicFns/weaken.js"))}
           {addButton("Remove Weaken", "removeWeaken", () => replaceScript(ns, "/basicFns/weaken.js", "/basicFns/grow.js"))}
-          {makeList(config.weakenServers)}
+          <details open>
+            <summary>Weaken Servers</summary>
+            {makeList(config.weakenServers)}
+          </details>
         </div>
 
         <br></br>
@@ -90,7 +99,7 @@ function getHTML(ns: NS, config: LoopHackConfig) {
 
         <br></br>
         {addButton("Add Server", "addServer", () => addNewServer(ns))}
-        {addButton("Save Servers", "saveServers", () => saveCurrentServers(ns, config))}
+        {/* {addButton("Save Servers", "saveServers", () => saveCurrentServers(ns, config))} */}
       </body>
     </html>
   )
