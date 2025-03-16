@@ -52,12 +52,12 @@ async function openHackUI(ns: NS) {
   while (ns.scriptRunning("/ui/loopHackUI.js", "home")) {
     ns.clearLog();
     const config: LoopHackConfig = readServerConfig(ns)[0];
-    ns.printRaw(getHTML(ns, config));
-    await ns.asleep(10000);
+    ns.printRaw(await getHTML(ns, config));
+    await ns.asleep(5000);
   }
 }
 
-function getHTML(ns: NS, config: LoopHackConfig) {
+async function getHTML(ns: NS, config: LoopHackConfig) {
   return (
     <html>
       <head>
@@ -65,30 +65,27 @@ function getHTML(ns: NS, config: LoopHackConfig) {
       </head>
       <body>
         <div id="hack-div">
-          {/* <h3>Hack Servers: {[numHackThreads]}</h3> */}
           {addButton("Add Hack", "addHack", () => replaceScript(ns, "/basicFns/grow.js", "/basicFns/hack.js"))}
           <details open>
-            <summary>Hack Servers</summary>
-            {makeList(config.hackServers)}
+            <summary>Hack Servers: {[numHackThreads]}</summary>
+            {await makeList(ns, config.hackServers)}
           </details>
         </div>
 
         <div id="grow-div">
-          {/* <h3>Grow Servers: {[numGrowThreads]}</h3> */}
           {addButton("Add Grow", "addGrow", () => replaceScript(ns, "/basicFns/hack.js", "/basicFns/grow.js"))}
           <details open>
-            <summary>Grow Servers</summary>
-            {makeList(config.growServers)}
+            <summary>Grow Servers: {[numGrowThreads]}</summary>
+            {await makeList(ns, config.growServers)}
           </details>
         </div>
 
         <div id="weaken-div">
-          {/* <h3>Weaken Servers: {[numWeakenThreads]}</h3> */}
           {addButton("Add Weaken", "addWeaken", () => replaceScript(ns, "/basicFns/grow.js", "/basicFns/weaken.js"))}
           {addButton("Remove Weaken", "removeWeaken", () => replaceScript(ns, "/basicFns/weaken.js", "/basicFns/grow.js"))}
           <details open>
-            <summary>Weaken Servers</summary>
-            {makeList(config.weakenServers)}
+            <summary>Weaken Servers: {[numWeakenThreads]}</summary>
+            {await makeList(ns, config.weakenServers)}
           </details>
         </div>
 
@@ -301,11 +298,31 @@ function addButton(buttonName: string, buttonId: string, onClickFn: () => void) 
   );
 }
 
-function makeList(array: string[]) {
+async function makeList(ns: NS, array: string[]) {
   const listItems = array.map((item) => (
-    <p key={item}> {item}</p>
+    <p key={item} onClick={() => serverPrompt(ns, item)}> {item}</p>
   ));
   return listItems;
+}
+
+// TODO: need ability to update global thread count
+async function serverPrompt(ns: NS, server: string) {
+  const config = readServerConfig(ns)[0];
+  const choice = await ns.prompt("Select a server option", { type: "select", choices: ["stop scripts"] });
+
+  if(choice.toString() === "stop scripts") {
+    ns.tprint("killing scripts on " + server)
+    ns.killall(server);
+
+    if(config.growServers.includes(server)) {
+      config.growServers.splice(config.growServers.indexOf(server), 1);
+    } else if(config.hackServers.includes(server)) {
+      config.hackServers.splice(config.hackServers.indexOf(server), 1); 
+    } else if(config.weakenServers.includes(server)) {
+      config.weakenServers.splice(config.weakenServers.indexOf(server), 1); 
+    }
+    saveCurrentServers(ns, config);
+  }
 }
 
 function updateGlobalNumThreads(numThreads: number, scriptName: string): void {
