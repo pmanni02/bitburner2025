@@ -11,7 +11,7 @@
 5. add num threads to loopHack UI -> to get a better sense of optimal proportions (DONE)
 
 6. create loopHackV2
-    - redo UI (create drop down menu for server lists)
+    - redo UI (create drop down menu for server lists)                            (DONE)
     - add concept of a cluster -> group of servers targeting a single server
       - a new cluster would spawn a new log window OR update the current window
     - add button to create new cluster (group of servers)

@@ -85,7 +85,8 @@ export function getServersReadyToUseForHacking(ns: NS, isFresh?: boolean): Serve
       if (server.requiredHackingSkill && server.numOpenPortsRequired) {
         return (currentHackLevel >= server.requiredHackingSkill &&
           server.numOpenPortsRequired <= portHackLevel &&
-          server.maxRam >= 16) || server.purchasedByPlayer && server.hostname !== "home";
+          server.maxRam >= 16 && server.hostname !== "home") 
+          || server.purchasedByPlayer && server.hostname !== "home";
       }
       return;
     })
@@ -173,5 +174,5 @@ export function readServerConfig(ns: NS): LoopHackConfig[] {
 
 export function saveCurrentServers(ns: NS, config: LoopHackConfig) {
   ns.toast("Saving current servers...");
-  ns.write("loopHackConfig.json", "["+JSON.stringify(config)+"]", "w");
+  ns.write("loopHackConfig.json", "[" + JSON.stringify(config) + "]", "w");
 }
