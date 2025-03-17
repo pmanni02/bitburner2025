@@ -24,3 +24,8 @@
     - add button to display chart showing earnings over time -> to track trends
       - write data to txt OR json file (append)
       - to create chart, read from file and use external chart library
+
+// MAIN BRANCHES
+1. master (main)
+2. loopHackV2 (UI and script updates to loopHack script)
+3. contracts (coding contract changes)
