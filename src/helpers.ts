@@ -23,7 +23,7 @@ export async function main(ns: NS): Promise<void> {
   } else if (arg === "listFiles") {
     listServerFiles(ns);
   } else if (arg === "printCodingContracts") {
-    printCodingContracts(ns);
+    await printCodingContracts(ns);
   } 
 }
 
@@ -138,18 +138,29 @@ function listServerFiles(ns: NS, isFresh?: boolean) {
   exportToFile(ns, serverFilesList, "serverFiles.json");
 }
 
-function printCodingContracts(ns: NS) {
+async function printCodingContracts(ns: NS) {
   listServerFiles(ns, true);
   const serverFilesString = ns.read("serverFiles.json");
   const serverFiles = serverFilesString ? JSON.parse(serverFilesString) : undefined;
 
+  const contractNameFilter = await ns.prompt("Which contract?", {
+    "type": "text",
+  })
+
   if (serverFiles) {
     serverFiles.forEach((server: ServerFile) => {
-      const codingContracts = server.files.filter((file) => file.includes('contract-'));
+      const codingContracts = server.files.filter((file) => {
+        return file.includes('contract-')
+      });
       if (codingContracts.length > 0) { ns.tprint(server.hostname) }
       codingContracts.forEach((contract) => {
         const codingContractDetails = ns.codingcontract.getContract(contract, server.hostname);
-        ns.tprint(" -", codingContractDetails.type)
+        if(contractNameFilter && codingContractDetails.type === contractNameFilter) {
+          ns.tprint(" -", codingContractDetails.type);
+        }
+        if(!contractNameFilter) {
+          ns.tprint(" -", codingContractDetails.type)
+        }
       });
     });
   }
