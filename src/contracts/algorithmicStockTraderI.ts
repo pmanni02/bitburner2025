@@ -16,15 +16,9 @@
 import { NS } from "@ns";
 
 export async function main(ns: NS): Promise<void> {
-  // if you buy stock at price a on day 1, and the price increases on day 2 -> profit
-  // if you buy stock at price a on day 1, and the price decreases on day 2 -> loss
-  // if you buy stock at price a on day 1, and the price stays the same on day 2 -> ----
-  // to find maximum profit, find the indicies of the largest increase
-
   // ie: 1,2,3,4,5,2,1
-  //     
   //     1 -> 5
-  //    buy on day 1, sell on day 4 -> profit is 4
+  //    buy on day 1, sell on day 5 -> profit is 4
 
   const input = [
     107, 192, 179, 172, 73, 172, 94, 117, 158, 171, 166, 45
