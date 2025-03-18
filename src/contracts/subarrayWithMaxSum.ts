@@ -19,13 +19,19 @@ import { NS } from "@ns";
  * Output: void (prints sum)
  * @param ns 
  */
-export async function main(ns: NS, input: number[] | undefined) {
-  let currentBestSubarray: number[] = [];
-  let array: number[] | undefined;
-  if (!input) {
-    array = [-8, -8, -9, 0, 8, 0, 10, -7, 2, 7, -5, -2, -4, -3, -8, -2, 1, 10, 5, -3, -8, 10, -5, -5, -8, 8, 9, -8];
-  }
-  array = input;
+export async function main(ns: NS): Promise<void> {
+  const array = [-8,-8,-9,0,8,0,10,-7,2,7,-5,-2,-4,-3,-8,-2,1,10,5,-3,-8,10,-5,-5,-8,8,9,-8];
+  
+  // find the smallest number in the array -> the answer must include one element
+  let indexOfSmallestNumber = 0;
+  let smallestNumber = array[0];
+  array.forEach((e,i) => { 
+    if(e < smallestNumber) {
+      smallestNumber = e;
+      indexOfSmallestNumber = i
+    } 
+  })
+  let bestSum = array[indexOfSmallestNumber]; 
 
   if (array) {
     // find the smallest number in the array -> the answer must include one element
