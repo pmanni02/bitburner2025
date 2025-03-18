@@ -20,7 +20,7 @@ import { NS } from "@ns";
  * @param ns 
  */
 export async function main(ns: NS): Promise<void> {
-  const array = [-5,6,1,-10,-2,-5,-1,7,-10,6,-7,6,-1,9,4,-9,-5,9,-3];
+  const array = [-8,-8,-9,0,8,0,10,-7,2,7,-5,-2,-4,-3,-8,-2,1,10,5,-3,-8,10,-5,-5,-8,8,9,-8];
   
   // find the smallest number in the array -> the answer must include one element
   let indexOfSmallestNumber = 0;
@@ -63,3 +63,6 @@ export async function main(ns: NS): Promise<void> {
 
 // Input: -7,-6,-8,0,2,-2,-7,-5,8,-5,-1,-3,0,0,-2,0,-8,6
 // 1. Answer: [8] -> 8 CORRECT
+
+// Input: -8,-8,-9,0,8,0,10,-7,2,7,-5,-2,-4,-3,-8,-2,1,10,5,-3,-8,10,-5,-5,-8,8,9,-8
+// 1. Answer: 20 -> CORRECT
