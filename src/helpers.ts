@@ -1,5 +1,5 @@
 import { NS, Server } from "@ns";
-import { LoopHackConfig, ServerFile } from "./utils/interfaces";
+import { LoopHackConfig, ServerFile } from "./interfaces";
 
 /**
  * @param ns @param {AutocompleteData} data
@@ -101,7 +101,7 @@ function killRunningScripts(ns: NS, isFresh?: boolean): Server[] {
   const list = importServerList(ns);
 
   let hasScriptsRunning: Server[] = [];
-  const scripts = ["/basicFns/grow.js", "/basicFns/weaken.js", "/basicFns/hack.js"];
+  const scripts = ["/utils/grow.js", "/utils/weaken.js", "/utils/hack.js"];
   if (list) {
     hasScriptsRunning = list.filter((server) => {
       const hasAScriptRunning = scripts.filter((s) => ns.scriptRunning(s, server.hostname))
