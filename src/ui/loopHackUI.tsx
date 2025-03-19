@@ -1,7 +1,7 @@
 import { NS } from "@ns";
 import { getServersReadyToUseForHacking, readServerConfig, saveCurrentServers } from "../helpers";
-import { LoopHackConfig } from "../utils/interfaces";
-import { BASIC_SCRIPT_RAM_SIZE, RAM_CHOICES, TARGET_SERVER } from "../utils/constants";
+import { LoopHackConfig } from "../interfaces";
+import { BASIC_SCRIPT_RAM_SIZE, RAM_CHOICES, TARGET_SERVER } from "../constants";
 
 /*eslint no-constant-condition: */
 
@@ -20,9 +20,9 @@ export async function main(ns: NS): Promise<void> {
   const args = ns.args;
   const config: LoopHackConfig = readServerConfig(ns)[0]
   if (config !== undefined && args && args[0] === "init") {
-    config.growServers = ["n00dles", "foodnstuff", "sigma-cosmetics", "hong-fang-tea"];
+    config.growServers = ["n00dles", "foodnstuff", "sigma-cosmetics"];
     config.hackServers = [];
-    config.weakenServers = ["joesguns", "harakiri-sushi"];
+    config.weakenServers = ["joesguns"];
     saveCurrentServers(ns, config);
   }
 
