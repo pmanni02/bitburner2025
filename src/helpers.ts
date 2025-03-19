@@ -24,7 +24,7 @@ export async function main(ns: NS): Promise<void> {
     listServerFiles(ns);
   } else if (arg === "printCodingContracts") {
     await printCodingContracts(ns);
-  } 
+  }
 }
 
 function scan(ns: NS): void {
@@ -71,12 +71,20 @@ export function importServerList(ns: NS): Server[] | null {
   return serverArrayString ? JSON.parse(serverArrayString) : null;
 }
 
+/**
+ * Gets list of servers where:
+ * - max ram >= 16 GB
+ * - current hack level > required hack level
+ * - the server is NOT the home server
+ * @param ns Netscript
+ * @param isFresh 
+ * @returns 
+ */
 export function getServersReadyToUseForHacking(ns: NS, isFresh?: boolean): Server[] {
   if (isFresh) { scan(ns) }
   const list = importServerList(ns);
   const currentHackLevel = ns.getHackingLevel();
   const portHackLevel = getPortHackLevel(ns);
-  // ns.tprint("portHackLevel: "+ portHackLevel)
 
   let canHack: Server[] = [];
 
@@ -85,14 +93,13 @@ export function getServersReadyToUseForHacking(ns: NS, isFresh?: boolean): Serve
       if (server.requiredHackingSkill && server.numOpenPortsRequired) {
         return (currentHackLevel >= server.requiredHackingSkill &&
           server.numOpenPortsRequired <= portHackLevel &&
-          server.maxRam >= 16 && server.hostname !== "home") 
+          server.maxRam >= 16 && server.hostname !== "home")
           || server.purchasedByPlayer && server.hostname !== "home";
       }
       return;
     })
   }
 
-  // ns.tprint(canHack);
   return canHack;
 }
 
@@ -156,10 +163,10 @@ async function printCodingContracts(ns: NS) {
       if (codingContracts.length > 0) { ns.tprint(server.hostname) }
       codingContracts.forEach((contract) => {
         const codingContractDetails = ns.codingcontract.getContract(contract, server.hostname);
-        if(contractNameFilter && codingContractDetails.type === contractNameFilter) {
+        if (contractNameFilter && codingContractDetails.type === contractNameFilter) {
           ns.tprint(" -", codingContractDetails.type);
         }
-        if(!contractNameFilter) {
+        if (!contractNameFilter) {
           ns.tprint(" -", codingContractDetails.type)
         }
       });
@@ -167,12 +174,22 @@ async function printCodingContracts(ns: NS) {
   }
 }
 
+/**
+ * Read from loopHackConfig.json
+ * @param ns 
+ * @returns LoopHackConfig
+ */
 export function readServerConfig(ns: NS): LoopHackConfig[] {
   const data = ns.read("loopHackConfig.json");
   return data ? JSON.parse(data) : []
 }
 
-export function saveCurrentServers(ns: NS, config: LoopHackConfig) {
+/**
+ * Overwrites loopHackConfig.json file with updated config
+ * @param ns Netscript
+ * @param config LoopHackConfig
+ */
+export function writeServerConfig(ns: NS, config: LoopHackConfig) {
   ns.toast("Saving current servers...");
   ns.write("loopHackConfig.json", "[" + JSON.stringify(config) + "]", "w");
 }
