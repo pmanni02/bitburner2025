@@ -12,15 +12,21 @@
 
 6. create loopHackV2
     - redo UI (create drop down menu for server lists)                            (DONE)
+    - make server names clickable -> open toast for more options (DONE)
+      - add ability to manually change script type for a single server (ie: click on the server and choose either hack/grow/weaken option)
+    - add button to change target (DONE)
+    - add button to enable/disable basic automation
+      - enabling the button -> update scripts based on basic security/available funds (instead of manually)
+      - disabling the button -> scripts only can be updated manually
+
+7. create clusters
     - add concept of a cluster -> group of servers targeting a single server
       - a new cluster would spawn a new log window OR update the current window
     - add button to create new cluster (group of servers)
-    - make server names clickable -> open toast for more options (DONE)
-      - add ability to move servers between clusters
-      - add ability to move servers within cluster
-    - add button to change target (DONE)
+    - add ability to move servers between clusters
+    - add ability to move servers within cluster
 
-7. create monitorV2
+8. create monitorV2
     - add button to display chart showing earnings over time -> to track trends
       - write data to txt OR json file (append)
       - to create chart, read from file and use external chart library
@@ -29,6 +35,7 @@
 1. master (main)
 2. loopHackV2 (UI and script updates to loopHack script)
 3. contracts (coding contract changes)
+4. clusterV1 (UI and scripts updates for cluster concept)
 
 // INITIAL HACK SETUP
 [
