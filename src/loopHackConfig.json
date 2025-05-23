@@ -1,8 +1,0 @@
-[
-  {
-    "targetServer": "silver-helix",
-    "hackServers": [],
-    "growServers": ["n00dles", "foodnstuff", "sigma-cosmetics", "hong-fang-tea"],
-    "weakenServers": ["joesguns", "harakiri-sushi"]
-  }
-]
