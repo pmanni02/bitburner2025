@@ -18,16 +18,18 @@ let TARGET_SERVER = '';
  * @param ns - Netscript
  */
 export async function main(ns: NS): Promise<void> {
-  const args = ns.args;
+  // const args = ns.args;
   const config: LoopHackConfig = readServerConfig(ns)[0]
-  // ns.tprint('CONFIG: ', config)
-  if (config !== undefined && args && args[0] === "init") {
-    config.growServers = ["n00dles", "foodnstuff", "sigma-cosmetics"];
-    config.hackServers = [];
-    config.weakenServers = ["joesguns"];
-    writeServerConfig(ns, config);
-  }
   TARGET_SERVER = config.targetServer
+
+  // INITIAL hack config with no augmentations
+  // if (config !== undefined && args && args[0] === "init") {
+  //   config.growServers = ["n00dles", "sigma-cosmetics"];
+  //   config.hackServers = [];
+  //   config.weakenServers = ["joesguns"];
+  //   TARGET_SERVER = "foodnstuff"
+  //   writeServerConfig(ns, config);
+  // }
 
   ns.disableLog("ALL");
 
@@ -132,7 +134,7 @@ async function deployInitialScript(ns: NS, script: string, initialServers: strin
     ns.nuke(curServ);
     ns.scp(script, curServ);
     ns.exec(script, curServ, numThreads - 1, TARGET_SERVER); // (uses one less thread just to be safe)
-    
+
     updateGlobalNumThreads(numThreads, script)
     await ns.sleep(Math.random() * 500);
   }
@@ -324,6 +326,7 @@ async function upgradePurchasedServer(ns: NS) {
 }
 
 function changeTargetServer(ns: NS) {
+  ns.clearLog()
   // save current config
   // kill all scripts running
   // kill loopHackUI and monitorUI on home server
