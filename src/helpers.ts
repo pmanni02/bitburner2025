@@ -16,7 +16,7 @@ export async function main(ns: NS): Promise<void> {
     scanServers(ns);
   } else if (arg === "readServerList") {
     importServerList(ns);
-  } 
+  }
   // else if (arg === "canHack") {
   //   getServersReadyToUseForHacking(ns);
   // } 
@@ -142,12 +142,60 @@ export function getServersReadyToUseForHacking(ns: NS, scanFirst?: boolean): Ser
   return canHack;
 }
 
+export function getAlternativeTargetServers(ns: NS): Server[] {
+  scanServers(ns)
+  const list = importServerList(ns);
+  const currentHackLevel = ns.getHackingLevel();
+  const portHackLevel = getPortHackLevel(ns);
+
+  let canHack: Server[] = [];
+
+  if (list) {
+    canHack = list.filter((server) => {
+      if (server.requiredHackingSkill && server.numOpenPortsRequired) {
+        return (
+          currentHackLevel >= server.requiredHackingSkill &&
+          server.numOpenPortsRequired <= portHackLevel &&
+          !server.purchasedByPlayer
+        )
+      }
+      return;
+    })
+  }
+
+  return canHack;
+}
+
+/**
+ * Opens all available ports and "nukes" server
+ * @param ns Netscript
+ * @param hostname hostname of server
+ */
+export function nukeServer(ns: NS, hostname: string) {
+  if (ns.fileExists("BruteSSH.exe", "home")) {
+    ns.brutessh(hostname);
+  }
+  if (ns.fileExists("FTPCrack.exe", "home")) {
+    ns.ftpcrack(hostname);
+  }
+  if (ns.fileExists("relaySMTP.exe", "home")) {
+    ns.relaysmtp(hostname);
+  }
+  if (ns.fileExists("HTTPWorm.exe", "home")) {
+    ns.httpworm(hostname);
+  }
+  if (ns.fileExists("SQLInject.exe", "home")) {
+    ns.sqlinject(hostname);
+  }
+  ns.nuke(hostname);
+}
+
 /**
  * Kills all grow/weaken/hack scripts on available servers
  * @param ns Netscript
  * @returns List of servers that had scripts running
  */
-function killRunningScripts(ns: NS): Server[] {
+export function killRunningScripts(ns: NS): Server[] {
   scanServers(ns);
   const list = importServerList(ns);
 
