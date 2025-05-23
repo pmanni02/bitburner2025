@@ -15,10 +15,10 @@
     - add concept of a cluster -> group of servers targeting a single server
       - a new cluster would spawn a new log window OR update the current window
     - add button to create new cluster (group of servers)
-    - make server names clickable -> open toast for more options
+    - make server names clickable -> open toast for more options (DONE)
       - add ability to move servers between clusters
       - add ability to move servers within cluster
-    - add button to change target
+    - add button to change target (DONE)
 
 7. create monitorV2
     - add button to display chart showing earnings over time -> to track trends
