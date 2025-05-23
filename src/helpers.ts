@@ -5,21 +5,23 @@ import { LoopHackConfig, ServerFile } from "./interfaces";
  * @param ns @param {AutocompleteData} data
  */
 export function autocomplete() {
-  return ["scan", "read", "canHack", "killScripts", "listFiles", "printCodingContracts"]
+  return ["scanServers", "readServerList", "canHack", "killScripts", "listFiles", "printCodingContracts"]
 }
 
 export async function main(ns: NS): Promise<void> {
   const args = ns.args;
   const arg = args.length > 0 ? args[0] : "";
 
-  if (arg === "scan") {
-    scan(ns);
-  } else if (arg === "read") {
+  if (arg === "scanServers") {
+    scanServers(ns);
+  } else if (arg === "readServerList") {
     importServerList(ns);
-  } else if (arg === "canHack") {
-    getServersReadyToUseForHacking(ns);
-  } else if (arg === "killScripts") {
-    killRunningScripts(ns, true);
+  } 
+  // else if (arg === "canHack") {
+  //   getServersReadyToUseForHacking(ns);
+  // } 
+  else if (arg === "killScripts") {
+    killRunningScripts(ns);
   } else if (arg === "listFiles") {
     listServerFiles(ns);
   } else if (arg === "printCodingContracts") {
@@ -27,7 +29,22 @@ export async function main(ns: NS): Promise<void> {
   }
 }
 
-function scan(ns: NS): void {
+/**
+ * Export either server details OR server file details to new file or overwrite existing data
+ * @param ns Netscript
+ * @param data {Server[] | ServerFile[]}
+ * @param filename Filename of exported data
+ */
+function exportToFile(ns: NS, data: Server[] | ServerFile[], filename: string): void {
+  const serverArrayString = "[" + data.map((s) => JSON.stringify(s)).toString() + "]";
+  ns.write(filename, serverArrayString, "w");
+}
+
+/**
+ * Get list of server info. Save to serverList.json
+ * @param ns Netscript
+ */
+function scanServers(ns: NS): void {
   const toVist: string[] = ["home"];
   const visted: Server[] = [];
   while (toVist.length > 0) {
@@ -51,20 +68,32 @@ function scan(ns: NS): void {
 }
 
 /**
- * Export server details to new file or overwrite existing data
+ * Gets list of files on all available servers. 
+ * Exports to serverFiles.json
  * @param ns Netscript
- * @param data {Server[] | ServerFile[]}
- * @param filename Filename of exported data
  */
-function exportToFile(ns: NS, data: Server[] | ServerFile[], filename: string): void {
-  const serverArrayString = "[" + data.map((s) => JSON.stringify(s)).toString() + "]";
-  ns.write(filename, serverArrayString, "w");
+function listServerFiles(ns: NS) {
+  scanServers(ns);
+  const list = importServerList(ns);
+
+  const serverFilesList: ServerFile[] = [];
+  if (list) {
+    list.forEach((server) => {
+      serverFilesList.push({
+        hostname: server.hostname,
+        files: ns.ls(server.hostname),
+      });
+    });
+  }
+
+  exportToFile(ns, serverFilesList, "serverFiles.json");
 }
 
+
 /**
- * Import JSON string from file and translate to JSON
+ * Reads serverList.json and parses to JSON
  * @param ns Netscript
- * @returns {Server[]} Array of Server objects
+ * @returns Array of Server objects
  */
 export function importServerList(ns: NS): Server[] | null {
   const serverArrayString = ns.read("serverList.json");
@@ -72,16 +101,26 @@ export function importServerList(ns: NS): Server[] | null {
 }
 
 /**
- * Gets list of servers where:
+ * Get number of executables available
+ * @param ns 
+ * @returns Number of .exe files on home computer
+ */
+function getPortHackLevel(ns: NS) {
+  const hackFiles = ["BruteSSH.exe", "FTPCrack.exe", "relaySMTP.exe", "HTTPWorm.exe", "SQLInject.exe"];
+  return hackFiles.filter((file) => ns.fileExists(file, "home")).length;
+}
+
+/**
+ * Gets list of Server objects where:
  * - max ram >= 16 GB
  * - current hack level > required hack level
  * - the server is NOT the home server
  * @param ns Netscript
- * @param isFresh 
- * @returns 
+ * @param scanFirst Boolean - get available servers first
+ * @returns Array of Servers
  */
-export function getServersReadyToUseForHacking(ns: NS, isFresh?: boolean): Server[] {
-  if (isFresh) { scan(ns) }
+export function getServersReadyToUseForHacking(ns: NS, scanFirst?: boolean): Server[] {
+  if (scanFirst) { scanServers(ns) }
   const list = importServerList(ns);
   const currentHackLevel = ns.getHackingLevel();
   const portHackLevel = getPortHackLevel(ns);
@@ -103,8 +142,13 @@ export function getServersReadyToUseForHacking(ns: NS, isFresh?: boolean): Serve
   return canHack;
 }
 
-function killRunningScripts(ns: NS, isFresh?: boolean): Server[] {
-  if (isFresh) { scan(ns); }
+/**
+ * Kills all grow/weaken/hack scripts on available servers
+ * @param ns Netscript
+ * @returns List of servers that had scripts running
+ */
+function killRunningScripts(ns: NS): Server[] {
+  scanServers(ns);
   const list = importServerList(ns);
 
   let hasScriptsRunning: Server[] = [];
@@ -124,33 +168,16 @@ function killRunningScripts(ns: NS, isFresh?: boolean): Server[] {
   return hasScriptsRunning;
 }
 
-function getPortHackLevel(ns: NS) {
-  const hackFiles = ["BruteSSH.exe", "FTPCrack.exe", "relaySMTP.exe", "HTTPWorm.exe", "SQLInject.exe"];
-  return hackFiles.filter((file) => ns.fileExists(file, "home")).length;
-}
-
-function listServerFiles(ns: NS, isFresh?: boolean) {
-  if (isFresh) { scan(ns); }
-  const list = importServerList(ns);
-
-  const serverFilesList: ServerFile[] = [];
-  if (list) {
-    list.forEach((server) => {
-      serverFilesList.push({
-        hostname: server.hostname,
-        files: ns.ls(server.hostname),
-      });
-    });
-  }
-
-  exportToFile(ns, serverFilesList, "serverFiles.json");
-}
-
+/**
+ * Print list of available coding contracts
+ * @param ns 
+ */
 async function printCodingContracts(ns: NS) {
-  listServerFiles(ns, true);
+  listServerFiles(ns);
   const serverFilesString = ns.read("serverFiles.json");
   const serverFiles = serverFilesString ? JSON.parse(serverFilesString) : undefined;
 
+  // Optional filter for specific contract
   const contractNameFilter = await ns.prompt("Which contract?", {
     "type": "text",
   })
@@ -175,7 +202,7 @@ async function printCodingContracts(ns: NS) {
 }
 
 /**
- * Read from loopHackConfig.json
+ * readServerList from loopHackConfig.json
  * @param ns 
  * @returns LoopHackConfig
  */
