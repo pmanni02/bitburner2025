@@ -2,15 +2,16 @@ import { NS } from "@ns";
 import { getAlternativeTargetServers, getServersReadyToUseForHacking, killRunningScripts, nukeServer, readServerConfig, writeServerConfig } from "../helpers";
 import { LoopHackConfig } from "../interfaces";
 import { BASIC_SCRIPT_RAM_SIZE, RAM_CHOICES } from "../constants";
+import { LoopHackDashBoard } from "/components/loopHackDashboard";
 
 /*eslint no-constant-condition: */
 
-const myWindow = eval("window") as Window & typeof globalThis;
-const React = myWindow.React;
+// const myWindow = eval("window") as Window & typeof globalThis;
+// const React = myWindow.React;
 
-let numHackThreads = 0;
-let numWeakenThreads = 0;
-let numGrowThreads = 0;
+// let numHackThreads = 0;
+// let numWeakenThreads = 0;
+// let numGrowThreads = 0;
 let TARGET_SERVER = '';
 
 /**
@@ -60,55 +61,55 @@ async function openHackUI(ns: NS) {
   while (ns.scriptRunning("/ui/loopHackUI.js", "home")) {
     ns.clearLog();
     const config: LoopHackConfig = readServerConfig(ns)[0];
-    ns.printRaw(await getHackUI(ns, config));
+    ns.printRaw(await LoopHackDashBoard(ns, config));
     await ns.asleep(5000);
   }
 }
 
-async function getHackUI(ns: NS, config: LoopHackConfig) {
-  return (
-    <html>
-      <head>
-        <meta charSet="utf-8"></meta>
-      </head>
-      <body>
-        <div id="hack-div">
-          {addButton("Add Hack", "addHack", () => replaceScript(ns, "/utils/grow.js", "/utils/hack.js"))}
-          <details open>
-            <summary>Hack Servers: {[numHackThreads]}</summary>
-            {await makeList(ns, config.hackServers)}
-          </details>
-        </div>
+// async function getHackUI(ns: NS, config: LoopHackConfig) {
+//   return (
+//     <html>
+//       <head>
+//         <meta charSet="utf-8"></meta>
+//       </head>
+//       <body>
+//         <div id="hack-div">
+//           {addButton("Add Hack", "addHack", () => replaceScript(ns, "/utils/grow.js", "/utils/hack.js"))}
+//           <details open>
+//             <summary>Hack Servers: {[numHackThreads]}</summary>
+//             {await makeList(ns, config.hackServers)}
+//           </details>
+//         </div>
 
-        <div id="grow-div">
-          {addButton("Add Grow", "addGrow", () => replaceScript(ns, "/utils/hack.js", "/utils/grow.js"))}
-          <details open>
-            <summary>Grow Servers: {[numGrowThreads]}</summary>
-            {await makeList(ns, config.growServers)}
-          </details>
-        </div>
+//         <div id="grow-div">
+//           {addButton("Add Grow", "addGrow", () => replaceScript(ns, "/utils/hack.js", "/utils/grow.js"))}
+//           <details open>
+//             <summary>Grow Servers: {[numGrowThreads]}</summary>
+//             {await makeList(ns, config.growServers)}
+//           </details>
+//         </div>
 
-        <div id="weaken-div">
-          {addButton("Add Weaken", "addWeaken", () => replaceScript(ns, "/utils/grow.js", "/utils/weaken.js"))}
-          {addButton("Remove Weaken", "removeWeaken", () => replaceScript(ns, "/utils/weaken.js", "/utils/grow.js"))}
-          <details open>
-            <summary>Weaken Servers: {[numWeakenThreads]}</summary>
-            {await makeList(ns, config.weakenServers)}
-          </details>
-        </div>
+//         <div id="weaken-div">
+//           {addButton("Add Weaken", "addWeaken", () => replaceScript(ns, "/utils/grow.js", "/utils/weaken.js"))}
+//           {addButton("Remove Weaken", "removeWeaken", () => replaceScript(ns, "/utils/weaken.js", "/utils/grow.js"))}
+//           <details open>
+//             <summary>Weaken Servers: {[numWeakenThreads]}</summary>
+//             {await makeList(ns, config.weakenServers)}
+//           </details>
+//         </div>
 
-        <br></br>
+//         <br></br>
 
-        {addButton("Buy Server", "buyServer", () => buyNewServer(ns))}
-        {addButton("Upgrade Server", "upgradeServer", () => upgradePurchasedServer(ns))}
+//         {addButton("Buy Server", "buyServer", () => buyNewServer(ns))}
+//         {addButton("Upgrade Server", "upgradeServer", () => upgradePurchasedServer(ns))}
 
-        <br></br>
-        {addButton("Add Server", "addServer", () => addNewServer(ns))}
-        {addButton("Change Target", "changeTarget", async () => await changeTargetServer(ns))}
-      </body>
-    </html>
-  )
-}
+//         <br></br>
+//         {addButton("Add Server", "addServer", () => addNewServer(ns))}
+//         {addButton("Change Target", "changeTarget", async () => await changeTargetServer(ns))}
+//       </body>
+//     </html>
+//   )
+// }
 
 /**
  * Deploys/runs provided script on a list of servers
@@ -127,12 +128,12 @@ async function deployInitialScript(ns: NS, script: string, initialServers: strin
     ns.scp(script, curServ);
     ns.exec(script, curServ, numThreads - 1, TARGET_SERVER); // (uses one less thread just to be safe)
 
-    updateGlobalNumThreads(numThreads, script)
+    // updateGlobalNumThreads(numThreads, script)
     await ns.sleep(Math.random() * 500);
   }
 }
 
-function replaceScript(ns: NS, scriptToKill: string, scriptToStart: string) {
+export const replaceScript = (ns: NS, scriptToKill: string, scriptToStart: string) => {
   const config: LoopHackConfig = readServerConfig(ns)[0];
 
   let serverName;
@@ -159,7 +160,7 @@ function replaceScript(ns: NS, scriptToKill: string, scriptToStart: string) {
 
     ns.scp(scriptToStart, serverName);
     ns.exec(scriptToStart, serverName, numThreads, TARGET_SERVER);
-    updateGlobalNumThreads(-numThreads, scriptToKill)
+    // updateGlobalNumThreads(-numThreads, scriptToKill)
 
     const config: LoopHackConfig = readServerConfig(ns)[0];
 
@@ -171,11 +172,11 @@ function replaceScript(ns: NS, scriptToKill: string, scriptToStart: string) {
       config.weakenServers.unshift(serverName)
     }
     writeServerConfig(ns, config);
-    updateGlobalNumThreads(numThreads, scriptToStart)
+    // updateGlobalNumThreads(numThreads, scriptToStart)
   }
 }
 
-async function buyNewServer(ns: NS) {
+export const buyNewServer = async (ns: NS) => {
   ns.toast("buying server...");
   const config: LoopHackConfig = readServerConfig(ns)[0];
 
@@ -198,7 +199,7 @@ async function buyNewServer(ns: NS) {
     // default to copying/running grow script
     ns.scp("/utils/grow.js", newServer);
     ns.exec("/utils/grow.js", newServer, numThreads - 1, TARGET_SERVER);
-    updateGlobalNumThreads(numThreads - 1, "/utils/grow.js")
+    // updateGlobalNumThreads(numThreads - 1, "/utils/grow.js")
     ns.tprint("deployed new server: " + newServer + " with grow script");
 
     config.growServers.unshift(newServer);
@@ -209,7 +210,7 @@ async function buyNewServer(ns: NS) {
   ns.tprint("bought server costing: " + ns.getPurchasedServerCost(ram))
 }
 
-function addNewServer(ns: NS) {
+export const addNewServer = (ns: NS) => {
   ns.toast("adding server...");
   const config: LoopHackConfig = readServerConfig(ns)[0];
 
@@ -233,7 +234,7 @@ function addNewServer(ns: NS) {
     // default to copying/running grow script
     ns.scp("/utils/grow.js", newServer.hostname);
     ns.exec("/utils/grow.js", newServer.hostname, numThreads - 1, TARGET_SERVER);
-    updateGlobalNumThreads(numThreads, "/utils/grow.js")
+    // updateGlobalNumThreads(numThreads, "/utils/grow.js")
 
     ns.tprint("deployed new server: " + newServer.hostname + " with grow script");
     config.growServers.unshift(newServer.hostname);
@@ -247,7 +248,7 @@ function addNewServer(ns: NS) {
  * to start a script
  * @param ns Netscript
  */
-async function upgradePurchasedServer(ns: NS) {
+export const upgradePurchasedServer = async (ns: NS) => {
   const purchasedServers = ns.getPurchasedServers();
   const serverInput = await ns.prompt("Select server to upgrade", {
     type: "select",
@@ -300,7 +301,7 @@ async function upgradePurchasedServer(ns: NS) {
   // TODO: add more threads of whatever scripts is current running
 }
 
-async function changeTargetServer(ns: NS) {
+export const changeTargetServer = async (ns: NS) => {
   const availableTargets = getAlternativeTargetServers(ns)
   const availableTargetNames = availableTargets.map((target) => target.hostname)
   ns.tprint(availableTargetNames)
@@ -310,19 +311,19 @@ async function changeTargetServer(ns: NS) {
   });
   ns.tprint('new target server: ', newTargetServer)
 
-  if(newTargetServer) {
+  if (newTargetServer) {
     const runningLoopHackUI = ns.getRunningScript('ui/loopHackUI.js')
 
     // save updated config w/ new target
     const config: LoopHackConfig = readServerConfig(ns)[0];
     config.targetServer = newTargetServer.toString();
     writeServerConfig(ns, config);
-    
+
     // kill existing runing scripts
     killRunningScripts(ns)
-    
+
     // kill script running ui for old target
-    if(runningLoopHackUI) {
+    if (runningLoopHackUI) {
       ns.kill(runningLoopHackUI.pid)
       ns.ui.closeTail(runningLoopHackUI.pid)
     }
@@ -333,7 +334,7 @@ async function changeTargetServer(ns: NS) {
 }
 
 // TODO: need ability to update global thread count
-async function serverPrompt(ns: NS, server: string) {
+export const serverPrompt = async (ns: NS, server: string) => {
   const config = readServerConfig(ns)[0];
   const choice = await ns.prompt("Select a server option", { type: "select", choices: ["stop scripts"] });
 
@@ -353,28 +354,28 @@ async function serverPrompt(ns: NS, server: string) {
 }
 
 //------------------------------------------------------------------------------------
-function addButton(buttonName: string, buttonId: string, onClickFn: () => void) {
-  return (
-    <button id={buttonId} onClick={onClickFn}>
-      {buttonName}
-    </button>
-  );
-}
+// function addButton(buttonName: string, buttonId: string, onClickFn: () => void) {
+//   return (
+//     <button id={buttonId} onClick={onClickFn}>
+//       {buttonName}
+//     </button>
+//   );
+// }
 
-async function makeList(ns: NS, array: string[]) {
-  const listItems = array.map((item) => (
-    <p key={item} onClick={() => serverPrompt(ns, item)}> {item}</p>
-  ));
-  return listItems;
-}
+// async function makeList(ns: NS, array: string[]) {
+//   const listItems = array.map((item) => (
+//     <p key={item} onClick={() => serverPrompt(ns, item)}> {item}</p>
+//   ));
+//   return listItems;
+// }
 
-function updateGlobalNumThreads(numThreads: number, scriptName: string): void {
-  if (scriptName === "/utils/hack.js") {
-    numHackThreads += numThreads;
-  } else if (scriptName === "/utils/weaken.js") {
-    numWeakenThreads += numThreads;
-  } else if (scriptName === "/utils/grow.js") {
-    numGrowThreads += numThreads;
-  }
-}
+// function updateGlobalNumThreads(numThreads: number, scriptName: string): void {
+//   if (scriptName === "/utils/hack.js") {
+//     numHackThreads += numThreads;
+//   } else if (scriptName === "/utils/weaken.js") {
+//     numWeakenThreads += numThreads;
+//   } else if (scriptName === "/utils/grow.js") {
+//     numGrowThreads += numThreads;
+//   }
+// }
 
