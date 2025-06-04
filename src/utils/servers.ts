@@ -23,8 +23,8 @@ export const buyNewServer = async (ns: NS, config: LoopHackConfig): Promise<Loop
     const numThreads = Math.floor(ram / BASIC_SCRIPT_RAM_SIZE);
 
     // default to copying/running grow script
-    ns.scp("/utils/grow.js", newServer);
-    ns.exec("/utils/grow.js", newServer, numThreads - 1, config.targetServer);
+    ns.scp("/utils/basicScripts/grow.js", newServer);
+    ns.exec("/utils/basicScripts/grow.js", newServer, numThreads - 1, config.targetServer);
     // updateGlobalNumThreads(numThreads - 1, "/utils/grow.js")
     ns.tprint("deployed new server: " + newServer + " with grow script");
 
@@ -59,8 +59,8 @@ export const addNewServer = (ns: NS, config: LoopHackConfig): LoopHackConfig | u
     nukeServer(ns, config.targetServer)
 
     // default to copying/running grow script
-    ns.scp("/utils/grow.js", newServer.hostname);
-    ns.exec("/utils/grow.js", newServer.hostname, numThreads - 1, config.targetServer);
+    ns.scp("/utils/basicScripts/grow.js", newServer.hostname);
+    ns.exec("/utils/basicScripts/grow.js", newServer.hostname, numThreads - 1, config.targetServer);
     // updateGlobalNumThreads(numThreads, "/utils/grow.js")
 
     ns.tprint("deployed new server: " + newServer.hostname + " with grow script");
@@ -155,7 +155,7 @@ export const changeTargetServer = async (ns: NS, config: LoopHackConfig): Promis
       ns.kill(runningLoopHackUI.pid)
       ns.ui.closeTail(runningLoopHackUI.pid)
     }
-    ns.exec('ui/loopHackUI.js', 'home')
+    ns.exec('ui/loopHack.js', 'home')
   } else {
     ns.tprint('Please select new target server')
   }
@@ -181,3 +181,5 @@ export const serverPrompt = async (ns: NS, server: string, config: LoopHackConfi
   }
   return config
 }
+
+

@@ -2,17 +2,17 @@ import { NS } from "@ns";
 import { nukeServer, readServerConfig, writeServerConfig } from "../utils/helpers";
 import { LoopHackConfig } from "../interfaces";
 import { BASIC_SCRIPT_RAM_SIZE } from "../constants";
-import { LoopHackDashBoard } from "/components/loopHackDashboard";
+import { LoopHackDashboard } from "/components/LoopHackDashboard";
 
 /*eslint no-constant-condition: */
 
 const myWindow = eval("window") as Window & typeof globalThis;
-const React = myWindow.React;
+const React = myWindow.React; 
 
 // let numHackThreads = 0;
 // let numWeakenThreads = 0;
 // let numGrowThreads = 0;
-let TARGET_SERVER = '';
+let TARGET_SERVER = ''; 
 
 /**
  * Main fn - deploys initial scripts and opens UI
@@ -42,13 +42,13 @@ export async function main(ns: NS): Promise<void> {
   // Run available executables against target server from home server
   nukeServer(ns, TARGET_SERVER)
 
-  await deployInitialScript(ns, "/utils/hack.js", config.hackServers);
-  await deployInitialScript(ns, "/utils/grow.js", config.growServers);
-  await deployInitialScript(ns, "/utils/weaken.js", config.weakenServers);
+  await deployInitialScript(ns, "/utils/basicScripts/hack.js", config.hackServers);
+  await deployInitialScript(ns, "/utils/basicScripts/grow.js", config.growServers);
+  await deployInitialScript(ns, "/utils/basicScripts/weaken.js", config.weakenServers);
 
   // OPEN UI FOR MONITORING TARGET SERVER
-  if (!ns.getRunningScript("/ui/monitorUI.js", "home")) {
-    ns.exec("/ui/monitorUI.js", "home", undefined, TARGET_SERVER);
+  if (!ns.getRunningScript("/ui/monitor.js", "home")) {
+    ns.exec("/ui/monitor.js", "home", undefined, TARGET_SERVER);
   }
 
   // OPEN UI TO LIST SEVERS & MANUALLY BALANCE SCRIPTS
@@ -61,9 +61,9 @@ async function openHackUI(ns: NS, config:LoopHackConfig) {
   while (ns.scriptRunning("/ui/loopHack.js", "home")) {
     ns.clearLog();
     ns.printRaw(
-      <LoopHackDashBoard ns={ns} config={config} />
+      <LoopHackDashboard ns={ns} config={config} />
     );
-    await ns.asleep(3000);
+    await ns.asleep(5000);
   }
 }
 
