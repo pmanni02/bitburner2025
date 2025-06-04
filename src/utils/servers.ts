@@ -25,7 +25,6 @@ export const buyNewServer = async (ns: NS, config: LoopHackConfig): Promise<Loop
     // default to copying/running grow script
     ns.scp(growScriptPath, newServer);
     ns.exec(growScriptPath, newServer, numThreads - 1, config.targetServer);
-    // updateGlobalNumThreads(numThreads - 1, "/utils/grow.js")
     ns.tprint("deployed new server: " + newServer + " with grow script");
 
     config.growServers.unshift(newServer);
@@ -61,7 +60,6 @@ export const addNewServer = (ns: NS, config: LoopHackConfig): LoopHackConfig | u
     // default to copying/running grow script
     ns.scp(growScriptPath, newServer.hostname);
     ns.exec(growScriptPath, newServer.hostname, numThreads - 1, config.targetServer);
-    // updateGlobalNumThreads(numThreads, "/utils/grow.js")
 
     ns.tprint("deployed new server: " + newServer.hostname + " with grow script");
     config.growServers.unshift(newServer.hostname);
@@ -126,8 +124,6 @@ export const upgradePurchasedServer = async (ns: NS, config: LoopHackConfig): Pr
   }
 
   return config
-
-  // TODO: add more threads of whatever scripts is current running
 }
 
 export const changeTargetServer = async (ns: NS, config: LoopHackConfig): Promise<LoopHackConfig> => {
@@ -163,7 +159,6 @@ export const changeTargetServer = async (ns: NS, config: LoopHackConfig): Promis
   return config
 }
 
-// TODO: need ability to update global thread count
 export const serverPrompt = async (ns: NS, server: string, config: LoopHackConfig): Promise<LoopHackConfig> => {
   const choice = await ns.prompt("Select a server option", { type: "select", choices: ["stop scripts"] });
 
@@ -184,8 +179,6 @@ export const serverPrompt = async (ns: NS, server: string, config: LoopHackConfi
 }
 
 export const replaceScript = (ns: NS, scriptToKill: string, scriptToStart: string, config: LoopHackConfig): LoopHackConfig => {
-  // const config: LoopHackConfig = readServerConfig(ns)[0];
-
   let serverName;
   if (scriptToKill === growScriptPath) {
     serverName = config.growServers.pop();
@@ -210,7 +203,6 @@ export const replaceScript = (ns: NS, scriptToKill: string, scriptToStart: strin
 
     ns.scp(scriptToStart, serverName);
     ns.exec(scriptToStart, serverName, numThreads, config.targetServer);
-    // updateGlobalNumThreads(-numThreads, scriptToKill)
 
     if (scriptToStart === hackScriptPath) {
       config.hackServers.unshift(serverName)
@@ -220,7 +212,6 @@ export const replaceScript = (ns: NS, scriptToKill: string, scriptToStart: strin
       config.weakenServers.unshift(serverName)
     }
     writeServerConfig(ns, config);
-    // updateGlobalNumThreads(numThreads, scriptToStart)
   }
   return config
 }

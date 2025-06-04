@@ -11,7 +11,6 @@ type Props = {
   config: LoopHackConfig
 }
 
-// export function LoopHackDashBoard(ns: NS, config: LoopHackConfig){
 export function LoopHackDashboard({ ns, config }: Props) {
   const [currentConfig, setCurrentConfig] = React.useState<LoopHackConfig>(config)
 
@@ -22,7 +21,6 @@ export function LoopHackDashboard({ ns, config }: Props) {
       </head>
       <body>
         <div id="hack-div">
-          {/* {addButton("Add Hack", "addHack", () => replaceScript(ns, "/utils/grow.js", "/utils/hack.js", config.targetServer))} */}
           <button id="addHack" onClick={() => {
             const updatedConfig = replaceScript(ns, growScriptPath, hackScriptPath, config);
             setCurrentConfig(updatedConfig)
@@ -30,14 +28,12 @@ export function LoopHackDashboard({ ns, config }: Props) {
             Add Hack
           </button>
           <details open>
-            {/* <summary>Hack Servers: {[numHackThreads]}</summary> */}
             <summary>Hack Servers: </summary>
             {makeList(ns, config.hackServers, currentConfig)}
           </details>
         </div>
 
         <div id="grow-div">
-          {/* {addButton("Add Grow", "addGrow", () => replaceScript(ns, "/utils/hack.js", "/utils/grow.js", config.targetServer))} */}
           <button id="addGrow" onClick={() => {
             const updatedConfig = replaceScript(ns, hackScriptPath, growScriptPath, config);
             setCurrentConfig(updatedConfig)
@@ -45,14 +41,12 @@ export function LoopHackDashboard({ ns, config }: Props) {
             Add Grow
           </button>
           <details open>
-            {/* <summary>Grow Servers: {[numGrowThreads]}</summary> */}
             <summary>Grow Servers: </summary>
             {makeList(ns, config.growServers, currentConfig)}
           </details>
         </div>
 
         <div id="weaken-div">
-          {/* {addButton("Add Weaken", "addWeaken", () => replaceScript(ns, "/utils/grow.js", "/utils/weaken.js", config.targetServer))} */}
           <button id="addWeaken" onClick={() => {
             const updatedConfig = replaceScript(ns, growScriptPath, weakenScriptPath, config);
             setCurrentConfig(updatedConfig)
@@ -60,7 +54,6 @@ export function LoopHackDashboard({ ns, config }: Props) {
             Add Weaken
           </button>
 
-          {/* {addButton("Remove Weaken", "removeWeaken", () => replaceScript(ns, "/utils/weaken.js", "/utils/grow.js", config.targetServer))} */}
           <button id="removeWeaken" onClick={() => {
             const updatedConfig = replaceScript(ns, weakenScriptPath, growScriptPath, config);
             setCurrentConfig(updatedConfig)
@@ -69,7 +62,6 @@ export function LoopHackDashboard({ ns, config }: Props) {
           </button>
 
           <details open>
-            {/* <summary>Weaken Servers: {[numWeakenThreads]}</summary> */}
             <summary>Weaken Servers: </summary>
             {makeList(ns, config.weakenServers, currentConfig)}
           </details>
@@ -77,7 +69,6 @@ export function LoopHackDashboard({ ns, config }: Props) {
 
         <br></br>
 
-        {/* {addButton("Buy Server", "buyServer", () => buyNewServer(ns))} */}
         <button id="buyServer" onClick={async () => {
           const updatedConfig = await buyNewServer(ns, currentConfig)
           setCurrentConfig(updatedConfig)
@@ -85,8 +76,6 @@ export function LoopHackDashboard({ ns, config }: Props) {
           Buy Server
         </button>
 
-
-        {/* {addButton("Upgrade Server", "upgradeServer", () => upgradePurchasedServer(ns))} */}
         <button id="upgradeServer" onClick={async () => {
           const updatedConfig = await upgradePurchasedServer(ns, currentConfig)
           setCurrentConfig(updatedConfig)
@@ -95,7 +84,6 @@ export function LoopHackDashboard({ ns, config }: Props) {
         </button>
 
         <br></br>
-        {/* {addButton("Add Server", "addServer", () => addNewServer(ns))} */}
         <button id="addServer" onClick={async () => {
           const updatedConfig = await addNewServer(ns, currentConfig)
           if (updatedConfig) {
@@ -105,8 +93,6 @@ export function LoopHackDashboard({ ns, config }: Props) {
           Add Server
         </button>
 
-
-        {/* {addButton("Change Target", "changeTarget", async () => await changeTargetServer(ns))} */}
         <button id="changeTarget" onClick={async () => {
           const updatedConfig = await changeTargetServer(ns, currentConfig)
           if (updatedConfig) {
