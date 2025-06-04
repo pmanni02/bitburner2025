@@ -200,7 +200,11 @@ export function killRunningScripts(ns: NS): Server[] {
   const list = importServerList(ns);
 
   let hasScriptsRunning: Server[] = [];
-  const scripts = ["/utils/grow.js", "/utils/weaken.js", "/utils/hack.js"];
+  const scripts = [
+    "/utils/basicScripts/grow.js", 
+    "/utils/basicScripts/weaken.js", 
+    "/utils/basicScripts/hack.js"
+  ];
   if (list) {
     hasScriptsRunning = list.filter((server) => {
       const hasAScriptRunning = scripts.filter((s) => ns.scriptRunning(s, server.hostname))

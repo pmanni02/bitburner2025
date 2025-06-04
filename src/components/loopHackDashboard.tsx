@@ -1,6 +1,6 @@
 import { NS } from "@ns";
 import { LoopHackConfig } from "../interfaces";
-import { readServerConfig, writeServerConfig } from "../utils/helpers";
+import { writeServerConfig } from "../utils/helpers";
 import { BASIC_SCRIPT_RAM_SIZE } from "../constants";
 import { addNewServer, buyNewServer, changeTargetServer, serverPrompt, upgradePurchasedServer } from "/utils/servers";
 
@@ -13,7 +13,7 @@ type Props = {
 }
 
 // export function LoopHackDashBoard(ns: NS, config: LoopHackConfig){
-export function LoopHackDashBoard({ ns, config }: Props) {
+export function LoopHackDashboard({ ns, config }: Props) {
   const [currentConfig, setCurrentConfig] = React.useState<LoopHackConfig>(config)
 
   return (
@@ -25,7 +25,7 @@ export function LoopHackDashBoard({ ns, config }: Props) {
         <div id="hack-div">
           {/* {addButton("Add Hack", "addHack", () => replaceScript(ns, "/utils/grow.js", "/utils/hack.js", config.targetServer))} */}
           <button id="addHack" onClick={() => {
-            const updatedConfig = replaceScript(ns, "/utils/grow.js", "/utils/hack.js", config.targetServer);
+            const updatedConfig = replaceScript(ns, "/utils/basicScripts/grow.js", "/utils/basicScripts/hack.js", config);
             setCurrentConfig(updatedConfig)
           }}>
             Add Hack
@@ -40,7 +40,7 @@ export function LoopHackDashBoard({ ns, config }: Props) {
         <div id="grow-div">
           {/* {addButton("Add Grow", "addGrow", () => replaceScript(ns, "/utils/hack.js", "/utils/grow.js", config.targetServer))} */}
           <button id="addGrow" onClick={() => {
-            const updatedConfig = replaceScript(ns, "/utils/hack.js", "/utils/grow.js", config.targetServer);
+            const updatedConfig = replaceScript(ns, "/utils/basicScripts/hack.js", "/utils/basicScripts/grow.js", config);
             setCurrentConfig(updatedConfig)
           }}>
             Add Grow
@@ -55,7 +55,7 @@ export function LoopHackDashBoard({ ns, config }: Props) {
         <div id="weaken-div">
           {/* {addButton("Add Weaken", "addWeaken", () => replaceScript(ns, "/utils/grow.js", "/utils/weaken.js", config.targetServer))} */}
           <button id="addWeaken" onClick={() => {
-            const updatedConfig = replaceScript(ns, "/utils/grow.js", "/utils/weaken.js", config.targetServer);
+            const updatedConfig = replaceScript(ns, "/utils/basicScripts/grow.js", "/utils/basicScripts/weaken.js", config);
             setCurrentConfig(updatedConfig)
           }}>
             Add Weaken
@@ -63,7 +63,7 @@ export function LoopHackDashBoard({ ns, config }: Props) {
 
           {/* {addButton("Remove Weaken", "removeWeaken", () => replaceScript(ns, "/utils/weaken.js", "/utils/grow.js", config.targetServer))} */}
           <button id="removeWeaken" onClick={() => {
-            const updatedConfig = replaceScript(ns, "/utils/weaken.js", "/utils/grow.js", config.targetServer);
+            const updatedConfig = replaceScript(ns, "/utils/basicScripts/weaken.js", "/utils/basicScripts/grow.js", config);
             setCurrentConfig(updatedConfig)
           }}>
             Remove Weaken
@@ -128,19 +128,19 @@ function makeList(ns: NS, array: string[], config: LoopHackConfig) {
   return listItems;
 }
 
-export const replaceScript = (ns: NS, scriptToKill: string, scriptToStart: string, targetServer: string): LoopHackConfig => {
-  const config: LoopHackConfig = readServerConfig(ns)[0];
+const replaceScript = (ns: NS, scriptToKill: string, scriptToStart: string, config: LoopHackConfig): LoopHackConfig => {
+  // const config: LoopHackConfig = readServerConfig(ns)[0];
 
   let serverName;
-  if (scriptToKill === "/utils/grow.js") {
+  if (scriptToKill === "/utils/basicScripts/grow.js") {
     serverName = config.growServers.pop();
-  } else if (scriptToKill === "/utils/hack.js") {
+  } else if (scriptToKill === "/utils/basicScripts/hack.js") {
     if (config.hackServers.length) {
       serverName = config.hackServers.pop()
     } else {
       serverName = config.weakenServers.pop()
     }
-  } else if (scriptToKill === "/utils/weaken.js") {
+  } else if (scriptToKill === "/utils/basicScripts/weaken.js") {
     serverName = config.weakenServers.pop()
   }
   writeServerConfig(ns, config)
@@ -154,16 +154,14 @@ export const replaceScript = (ns: NS, scriptToKill: string, scriptToStart: strin
     const numThreads = Math.floor((maxRam - ramUsed) / BASIC_SCRIPT_RAM_SIZE);
 
     ns.scp(scriptToStart, serverName);
-    ns.exec(scriptToStart, serverName, numThreads, targetServer);
+    ns.exec(scriptToStart, serverName, numThreads, config.targetServer);
     // updateGlobalNumThreads(-numThreads, scriptToKill)
 
-    const config: LoopHackConfig = readServerConfig(ns)[0];
-
-    if (scriptToStart === "/utils/hack.js") {
+    if (scriptToStart === "/utils/basicScripts/hack.js") {
       config.hackServers.unshift(serverName)
-    } else if (scriptToStart === "/utils/grow.js") {
+    } else if (scriptToStart === "/utils/basicScripts/grow.js") {
       config.growServers.unshift(serverName)
-    } else if (scriptToStart === "/utils/weaken.js") {
+    } else if (scriptToStart === "/utils/basicScripts/weaken.js") {
       config.weakenServers.unshift(serverName)
     }
     writeServerConfig(ns, config);
