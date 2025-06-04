@@ -9,9 +9,6 @@ import { LoopHackDashboard } from "/components/LoopHackDashboard";
 const myWindow = eval("window") as Window & typeof globalThis;
 const React = myWindow.React;
 
-// let numHackThreads = 0;
-// let numWeakenThreads = 0;
-// let numGrowThreads = 0;
 let TARGET_SERVER = '';
 
 /**
@@ -84,7 +81,6 @@ async function deployInitialScript(ns: NS, script: string, initialServers: strin
     ns.scp(script, curServ);
     ns.exec(script, curServ, numThreads - 1, TARGET_SERVER); // (uses one less thread just to be safe)
 
-    // updateGlobalNumThreads(numThreads, script)
     await ns.sleep(Math.random() * 500);
   }
 }

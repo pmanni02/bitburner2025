@@ -2,14 +2,12 @@ import { NS } from "@ns";
 import { MonitorDetails } from "/interfaces";
 import { MonitorDashboard } from "../components/MonitorDashboard";
 
-// accessing global window or document in bitburner costs 25GB each normally. 
+// note from template: accessing global window or document in bitburner costs 25GB each normally. 
 // this saves RAM for early UI convenience, sorry devs pls don't fix.
 const myWindow = eval("window") as Window & typeof globalThis;
-// const myDocument = eval("document") as Document & typeof globalThis;
 
 //  bitburner devs included React and ReactDOM in global window object!
 const React = myWindow.React;
-// const ReactDOM = myWindow.ReactDOM;
 
 let RATE_OF_CHANGE = 0;
 let LAST_SERVER_AMOUNT = 1;
