@@ -1,5 +1,5 @@
 import { NS } from "@ns";
-import { BASIC_SCRIPT_RAM_SIZE, RAM_CHOICES } from "/constants";
+import { BASIC_SCRIPT_RAM_SIZE, RAM_CHOICES, growScriptPath, weakenScriptPath, hackScriptPath } from "/constants";
 import { getAlternativeTargetServers, getServersReadyToUseForHacking, killRunningScripts, nukeServer, writeServerConfig } from "./helpers";
 import { LoopHackConfig } from "/interfaces";
 
@@ -23,8 +23,8 @@ export const buyNewServer = async (ns: NS, config: LoopHackConfig): Promise<Loop
     const numThreads = Math.floor(ram / BASIC_SCRIPT_RAM_SIZE);
 
     // default to copying/running grow script
-    ns.scp("/utils/basicScripts/grow.js", newServer);
-    ns.exec("/utils/basicScripts/grow.js", newServer, numThreads - 1, config.targetServer);
+    ns.scp(growScriptPath, newServer);
+    ns.exec(growScriptPath, newServer, numThreads - 1, config.targetServer);
     // updateGlobalNumThreads(numThreads - 1, "/utils/grow.js")
     ns.tprint("deployed new server: " + newServer + " with grow script");
 
@@ -59,8 +59,8 @@ export const addNewServer = (ns: NS, config: LoopHackConfig): LoopHackConfig | u
     nukeServer(ns, config.targetServer)
 
     // default to copying/running grow script
-    ns.scp("/utils/basicScripts/grow.js", newServer.hostname);
-    ns.exec("/utils/basicScripts/grow.js", newServer.hostname, numThreads - 1, config.targetServer);
+    ns.scp(growScriptPath, newServer.hostname);
+    ns.exec(growScriptPath, newServer.hostname, numThreads - 1, config.targetServer);
     // updateGlobalNumThreads(numThreads, "/utils/grow.js")
 
     ns.tprint("deployed new server: " + newServer.hostname + " with grow script");
@@ -141,7 +141,8 @@ export const changeTargetServer = async (ns: NS, config: LoopHackConfig): Promis
   ns.tprint('new target server: ', newTargetServer)
 
   if (newTargetServer) {
-    const runningLoopHackUI = ns.getRunningScript('ui/loopHackUI.js')
+    const runningLoopHackUI = ns.getRunningScript('/ui/loopHack.js')
+    ns.tprint('runningLoopHackUI', runningLoopHackUI)
 
     // save updated config w/ new target
     config.targetServer = newTargetServer.toString();
@@ -155,7 +156,7 @@ export const changeTargetServer = async (ns: NS, config: LoopHackConfig): Promis
       ns.kill(runningLoopHackUI.pid)
       ns.ui.closeTail(runningLoopHackUI.pid)
     }
-    ns.exec('ui/loopHack.js', 'home')
+    ns.exec('/ui/loopHack.js', 'home')
   } else {
     ns.tprint('Please select new target server')
   }
@@ -182,4 +183,44 @@ export const serverPrompt = async (ns: NS, server: string, config: LoopHackConfi
   return config
 }
 
+export const replaceScript = (ns: NS, scriptToKill: string, scriptToStart: string, config: LoopHackConfig): LoopHackConfig => {
+  // const config: LoopHackConfig = readServerConfig(ns)[0];
 
+  let serverName;
+  if (scriptToKill === growScriptPath) {
+    serverName = config.growServers.pop();
+  } else if (scriptToKill === hackScriptPath) {
+    if (config.hackServers.length) {
+      serverName = config.hackServers.pop()
+    } else {
+      serverName = config.weakenServers.pop()
+    }
+  } else if (scriptToKill === weakenScriptPath) {
+    serverName = config.weakenServers.pop()
+  }
+  writeServerConfig(ns, config)
+
+  ns.toast("redeploying from " + scriptToKill + " to " + scriptToStart);
+  if (serverName) {
+    if (ns.killall(serverName)) {
+      ns.rm(scriptToKill, serverName);
+    }
+    const { maxRam, ramUsed } = ns.getServer(serverName);
+    const numThreads = Math.floor((maxRam - ramUsed) / BASIC_SCRIPT_RAM_SIZE);
+
+    ns.scp(scriptToStart, serverName);
+    ns.exec(scriptToStart, serverName, numThreads, config.targetServer);
+    // updateGlobalNumThreads(-numThreads, scriptToKill)
+
+    if (scriptToStart === hackScriptPath) {
+      config.hackServers.unshift(serverName)
+    } else if (scriptToStart === growScriptPath) {
+      config.growServers.unshift(serverName)
+    } else if (scriptToStart === weakenScriptPath) {
+      config.weakenServers.unshift(serverName)
+    }
+    writeServerConfig(ns, config);
+    // updateGlobalNumThreads(numThreads, scriptToStart)
+  }
+  return config
+}
