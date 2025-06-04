@@ -1,11 +1,10 @@
 import { NS } from "@ns";
 import { BASIC_SCRIPT_RAM_SIZE, RAM_CHOICES } from "/constants";
-import { getAlternativeTargetServers, getServersReadyToUseForHacking, killRunningScripts, nukeServer, readServerConfig, writeServerConfig } from "/helpers";
+import { getAlternativeTargetServers, getServersReadyToUseForHacking, killRunningScripts, nukeServer, writeServerConfig } from "./helpers";
 import { LoopHackConfig } from "/interfaces";
 
-export const buyNewServer = async (ns: NS) => {
+export const buyNewServer = async (ns: NS, config: LoopHackConfig): Promise<LoopHackConfig> => {
   ns.toast("buying server...");
-  const config: LoopHackConfig = readServerConfig(ns)[0];
 
   // select new server size
   const serverSize = await ns.prompt("Please select the server size", {
@@ -34,12 +33,13 @@ export const buyNewServer = async (ns: NS) => {
   } else {
     ns.toast("at purchased server limit or not enough funds")
   }
+
   ns.tprint("bought server costing: " + ns.getPurchasedServerCost(ram))
+  return config
 }
 
-export const addNewServer = (ns: NS) => {
+export const addNewServer = (ns: NS, config: LoopHackConfig): LoopHackConfig | undefined => {
   ns.toast("adding server...");
-  const config: LoopHackConfig = readServerConfig(ns)[0];
 
   const potentialServersToHack = getServersReadyToUseForHacking(ns, true);
   const currentServers = [...config.growServers, ...config.hackServers, ...config.weakenServers];
@@ -67,6 +67,8 @@ export const addNewServer = (ns: NS) => {
     config.growServers.unshift(newServer.hostname);
     writeServerConfig(ns, config);
   }
+
+  return config
 }
 
 /**
@@ -75,7 +77,7 @@ export const addNewServer = (ns: NS) => {
  * to start a script
  * @param ns Netscript
  */
-export const upgradePurchasedServer = async (ns: NS) => {
+export const upgradePurchasedServer = async (ns: NS, config: LoopHackConfig): Promise<LoopHackConfig> => {
   const purchasedServers = ns.getPurchasedServers();
   const serverInput = await ns.prompt("Select server to upgrade", {
     type: "select",
@@ -96,8 +98,6 @@ export const upgradePurchasedServer = async (ns: NS) => {
     newName = serverInput.toString().substring(0, 5) + newRam + serverInput.toString().slice(endIndex)
     ns.renamePurchasedServer(serverInput.toString(), newName)
     ns.toast("upgraded server " + serverInput.toString() + " with " + newRam);
-
-    const config: LoopHackConfig = readServerConfig(ns)[0];
 
     const isHackScript = config.hackServers.includes(serverInput.toString());
     const isWeakenScript = config.weakenServers.includes(serverInput.toString());
@@ -125,13 +125,15 @@ export const upgradePurchasedServer = async (ns: NS) => {
     ns.toast("something went wrong with server upgrade");
   }
 
+  return config
+
   // TODO: add more threads of whatever scripts is current running
 }
 
-export const changeTargetServer = async (ns: NS) => {
+export const changeTargetServer = async (ns: NS, config: LoopHackConfig): Promise<LoopHackConfig> => {
   const availableTargets = getAlternativeTargetServers(ns)
   const availableTargetNames = availableTargets.map((target) => target.hostname)
-  ns.tprint(availableTargetNames)
+  
   const newTargetServer = await ns.prompt("Select new target server", {
     type: "select",
     choices: availableTargetNames
@@ -142,7 +144,6 @@ export const changeTargetServer = async (ns: NS) => {
     const runningLoopHackUI = ns.getRunningScript('ui/loopHackUI.js')
 
     // save updated config w/ new target
-    const config: LoopHackConfig = readServerConfig(ns)[0];
     config.targetServer = newTargetServer.toString();
     writeServerConfig(ns, config);
 
@@ -158,11 +159,11 @@ export const changeTargetServer = async (ns: NS) => {
   } else {
     ns.tprint('Please select new target server')
   }
+  return config
 }
 
 // TODO: need ability to update global thread count
-export const serverPrompt = async (ns: NS, server: string) => {
-  const config = readServerConfig(ns)[0];
+export const serverPrompt = async (ns: NS, server: string, config: LoopHackConfig): Promise<LoopHackConfig> => {
   const choice = await ns.prompt("Select a server option", { type: "select", choices: ["stop scripts"] });
 
   if (choice.toString() === "stop scripts") {
@@ -178,4 +179,5 @@ export const serverPrompt = async (ns: NS, server: string) => {
     }
     writeServerConfig(ns, config);
   }
+  return config
 }

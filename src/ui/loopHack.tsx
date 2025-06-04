@@ -1,13 +1,13 @@
 import { NS } from "@ns";
-import { nukeServer, readServerConfig, writeServerConfig } from "../helpers";
+import { nukeServer, readServerConfig, writeServerConfig } from "../utils/helpers";
 import { LoopHackConfig } from "../interfaces";
 import { BASIC_SCRIPT_RAM_SIZE } from "../constants";
 import { LoopHackDashBoard } from "/components/loopHackDashboard";
 
 /*eslint no-constant-condition: */
 
-// const myWindow = eval("window") as Window & typeof globalThis;
-// const React = myWindow.React;
+const myWindow = eval("window") as Window & typeof globalThis;
+const React = myWindow.React;
 
 // let numHackThreads = 0;
 // let numWeakenThreads = 0;
@@ -21,9 +21,9 @@ let TARGET_SERVER = '';
 export async function main(ns: NS): Promise<void> {
   const args = ns.args;
   const existingConfig: LoopHackConfig = readServerConfig(ns)[0]
-  let config: LoopHackConfig;
 
   // INITIAL hack config with no augmentations
+  let config: LoopHackConfig;
   if (!existingConfig && args && args[0] === "init") {
     config = {
       "growServers": ["n00dles", "sigma-cosmetics"],
@@ -39,7 +39,7 @@ export async function main(ns: NS): Promise<void> {
   }
   ns.disableLog("ALL");
 
-  // Run available "hack" scripts from home server
+  // Run available executables against target server from home server
   nukeServer(ns, TARGET_SERVER)
 
   await deployInitialScript(ns, "/utils/hack.js", config.hackServers);
@@ -52,17 +52,18 @@ export async function main(ns: NS): Promise<void> {
   }
 
   // OPEN UI TO LIST SEVERS & MANUALLY BALANCE SCRIPTS
-  await openHackUI(ns);
+  await openHackUI(ns, config);
 }
 
-async function openHackUI(ns: NS) {
+async function openHackUI(ns: NS, config:LoopHackConfig) {
   ns.ui.openTail();
   ns.ui.resizeTail(360, 355);
   while (ns.scriptRunning("/ui/loopHack.js", "home")) {
     ns.clearLog();
-    const config: LoopHackConfig = readServerConfig(ns)[0];
-    ns.printRaw(await LoopHackDashBoard(ns, config));
-    await ns.asleep(5000);
+    ns.printRaw(
+      <LoopHackDashBoard ns={ns} config={config} />
+    );
+    await ns.asleep(3000);
   }
 }
 
