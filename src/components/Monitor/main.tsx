@@ -1,6 +1,6 @@
 import { NS } from "@ns";
 import { MonitorDetails } from "/interfaces";
-import { MonitorDashboard } from "../components/MonitorDashboard";
+import { MonitorDashboard } from "./MonitorDashboard";
 
 // note from template: accessing global window or document in bitburner costs 25GB each normally. 
 // this saves RAM for early UI convenience, sorry devs pls don't fix.

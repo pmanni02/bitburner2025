@@ -1,8 +1,8 @@
 import { NS } from "@ns";
-import { nukeServer, readServerConfig, writeServerConfig } from "../utils/helpers";
-import { LoopHackConfig } from "../interfaces";
-import { BASIC_SCRIPT_RAM_SIZE, growScriptPath, weakenScriptPath, hackScriptPath } from "../constants";
-import { LoopHackDashboard } from "/components/LoopHackDashboard";
+import { nukeServer, readServerConfig, writeServerConfig } from "../../utils/helpers";
+import { LoopHackConfig } from "../../interfaces";
+import { BASIC_SCRIPT_RAM_SIZE, growScriptPath, weakenScriptPath, hackScriptPath } from "../../constants";
+import { LoopHackDashboard } from "./LoopHackDashboard";
 
 /*eslint no-constant-condition: */
 
@@ -44,8 +44,8 @@ export async function main(ns: NS): Promise<void> {
   await deployInitialScript(ns, weakenScriptPath, config.weakenServers);
 
   // OPEN UI FOR MONITORING TARGET SERVER
-  if (!ns.getRunningScript("/ui/monitor.js", "home")) {
-    ns.exec("/ui/monitor.js", "home", undefined, TARGET_SERVER);
+  if (!ns.getRunningScript("/components/Monitor/main.js", "home")) {
+    ns.exec("/components/Monitor/main.js", "home", undefined, TARGET_SERVER);
   }
 
   // OPEN UI TO LIST SEVERS & MANUALLY BALANCE SCRIPTS
@@ -55,7 +55,7 @@ export async function main(ns: NS): Promise<void> {
 async function openHackUI(ns: NS, config: LoopHackConfig) {
   ns.ui.openTail();
   ns.ui.resizeTail(360, 355);
-  while (ns.scriptRunning("/ui/loopHack.js", "home")) {
+  while (ns.scriptRunning("/components/LoopHack/main.js", "home")) {
     ns.clearLog();
     ns.printRaw(
       <LoopHackDashboard ns={ns} config={config} />

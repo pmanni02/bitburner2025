@@ -137,7 +137,7 @@ export const changeTargetServer = async (ns: NS, config: LoopHackConfig): Promis
   ns.tprint('new target server: ', newTargetServer)
 
   if (newTargetServer) {
-    const runningLoopHackUI = ns.getRunningScript('/ui/loopHack.js')
+    const runningLoopHackUI = ns.getRunningScript('/components/LoopHack/main.js')
     ns.tprint('runningLoopHackUI', runningLoopHackUI)
 
     // save updated config w/ new target
@@ -152,7 +152,7 @@ export const changeTargetServer = async (ns: NS, config: LoopHackConfig): Promis
       ns.kill(runningLoopHackUI.pid)
       ns.ui.closeTail(runningLoopHackUI.pid)
     }
-    ns.exec('/ui/loopHack.js', 'home')
+    ns.exec('/components/LoopHack/main.js', 'home')
   } else {
     ns.tprint('Please select new target server')
   }
