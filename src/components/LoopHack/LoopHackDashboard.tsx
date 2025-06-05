@@ -1,5 +1,5 @@
 import { NS } from "@ns";
-import { LoopHackConfig } from "../interfaces";
+import { LoopHackConfig } from "../../interfaces";
 import { addNewServer, buyNewServer, changeTargetServer, replaceScript, serverPrompt, upgradePurchasedServer } from "/utils/servers";
 import { growScriptPath, hackScriptPath, weakenScriptPath } from "/constants";
 
