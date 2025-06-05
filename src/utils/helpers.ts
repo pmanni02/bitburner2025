@@ -1,5 +1,6 @@
 import { NS, Server } from "@ns";
-import { LoopHackConfig, ServerFile } from "./interfaces";
+import { LoopHackConfig, ServerFile } from "../interfaces";
+import { growScriptPath, hackScriptPath, weakenScriptPath } from "/constants";
 
 /**
  * @param ns @param {AutocompleteData} data
@@ -195,12 +196,18 @@ export function nukeServer(ns: NS, hostname: string) {
  * @param ns Netscript
  * @returns List of servers that had scripts running
  */
-export function killRunningScripts(ns: NS): Server[] {
+export function killRunningScripts(ns: NS): Server[] { 
+  ns.tprint('killing scripts for...')
+
   scanServers(ns);
-  const list = importServerList(ns);
+  const list = importServerList(ns); 
 
   let hasScriptsRunning: Server[] = [];
-  const scripts = ["/utils/grow.js", "/utils/weaken.js", "/utils/hack.js"];
+  const scripts = [
+    growScriptPath,
+    weakenScriptPath,
+    hackScriptPath
+  ];
   if (list) {
     hasScriptsRunning = list.filter((server) => {
       const hasAScriptRunning = scripts.filter((s) => ns.scriptRunning(s, server.hostname))
