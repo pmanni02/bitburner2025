@@ -23,10 +23,10 @@ export async function main(ns: NS): Promise<void> {
   let config: LoopHackConfig;
   if (!existingConfig && args && args[0] === "init") {
     config = {
-      "growServers": ["n00dles", "sigma-cosmetics"],
-      "hackServers": [],
-      "weakenServers": ["joesguns"],
-      "targetServer": "foodnstuff"
+      growServers: ["n00dles", "sigma-cosmetics"],
+      hackServers: [],
+      weakenServers: ["joesguns"],
+      targetServer: "foodnstuff"
     }
     TARGET_SERVER = config.targetServer
     writeServerConfig(ns, config);
