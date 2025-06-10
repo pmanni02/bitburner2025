@@ -1,5 +1,5 @@
 import { NS } from "@ns";
-import { BASIC_SCRIPT_RAM_SIZE, RAM_CHOICES, growScriptPath, weakenScriptPath, hackScriptPath } from "/constants";
+import { RAM_CHOICES, growScriptPath, weakenScriptPath, hackScriptPath } from "/constants";
 import { copyAndExecScript, getAlternativeTargetServers, getServersReadyToUseForHacking, killRunningScripts, writeServerConfig } from "./helpers";
 import { LoopHackConfig } from "/interfaces";
 
@@ -122,7 +122,7 @@ export const upgradePurchasedServer = async (ns: NS, config: LoopHackConfig): Pr
 export const changeTargetServer = async (ns: NS, config: LoopHackConfig): Promise<LoopHackConfig> => {
   const availableTargets = getAlternativeTargetServers(ns)
   const availableTargetNames = availableTargets.map((target) => target.hostname)
-  
+
   const newTargetServer = await ns.prompt("Select new target server", {
     type: "select",
     choices: availableTargetNames
@@ -153,20 +153,44 @@ export const changeTargetServer = async (ns: NS, config: LoopHackConfig): Promis
 }
 
 export const serverPrompt = async (ns: NS, server: string, config: LoopHackConfig): Promise<LoopHackConfig> => {
-  const choice = await ns.prompt("Select a server option", { type: "select", choices: ["stop scripts"] }).then((input) => input.toString());
+  const choice = await ns.prompt("Select a server option", { type: "select", choices: ["stop scripts", "move to"] }).then((input) => input.toString());
+  const { growServers, weakenServers, hackServers } = config
 
-  if (choice === "stop scripts") {
-    ns.tprint("killing scripts on " + server);
-    ns.killall(server);
+  switch (choice) {
+    case "stop scripts":
+      ns.tprint("killing scripts on " + server);
+      ns.killall(server);
 
-    if (config.growServers.includes(server)) {
-      config.growServers.splice(config.growServers.indexOf(server), 1);
-    } else if (config.hackServers.includes(server)) {
-      config.hackServers.splice(config.hackServers.indexOf(server), 1);
-    } else if (config.weakenServers.includes(server)) {
-      config.weakenServers.splice(config.weakenServers.indexOf(server), 1);
+      if (growServers.includes(server)) {
+        growServers.splice(growServers.indexOf(server), 1);
+      } else if (hackServers.includes(server)) {
+        hackServers.splice(hackServers.indexOf(server), 1);
+      } else if (weakenServers.includes(server)) {
+        weakenServers.splice(weakenServers.indexOf(server), 1);
+      }
+      writeServerConfig(ns, config);
+      break;
+    case "move to": {
+      const newScript = await ns.prompt("Select script", { type: "select", choices: ["hack", "weaken", "grow"] }).then((input) => input.toString())
+      ns.tprint(`replacing current script on ${server} with ${newScript}`);
+      const currentHackScriptPath = getScriptGroupType(ns, server, config);
+
+      //FIXME: remove if statement, replace with no-non-null-assertion elint
+      if (currentHackScriptPath) {
+        let updatedConfig = config
+        if (newScript === "hack") {
+          updatedConfig = replaceScript(ns, currentHackScriptPath, hackScriptPath, config);
+        } else if(newScript === "grow") {
+          updatedConfig = replaceScript(ns, currentHackScriptPath, growScriptPath, config);
+        } else if(newScript === "weaken") {
+          updatedConfig = replaceScript(ns, currentHackScriptPath, weakenScriptPath, config);
+        }
+        writeServerConfig(ns, updatedConfig);
+      }
     }
-    writeServerConfig(ns, config);
+      break;
+    default:
+      break;
   }
   return config;
 }
@@ -191,11 +215,8 @@ export const replaceScript = (ns: NS, scriptToKill: string, scriptToStart: strin
     if (ns.killall(serverName)) {
       ns.rm(scriptToKill, serverName);
     }
-    const { maxRam, ramUsed } = ns.getServer(serverName);
-    const numThreads = Math.floor((maxRam - ramUsed) / BASIC_SCRIPT_RAM_SIZE);
 
-    ns.scp(scriptToStart, serverName);
-    ns.exec(scriptToStart, serverName, numThreads, config.targetServer);
+    copyAndExecScript(ns, serverName, config.targetServer, scriptToStart, true)
 
     if (scriptToStart === hackScriptPath) {
       config.hackServers.unshift(serverName);
@@ -207,4 +228,22 @@ export const replaceScript = (ns: NS, scriptToKill: string, scriptToStart: strin
     writeServerConfig(ns, config);
   }
   return config;
+}
+
+function getScriptGroupType(ns: NS, serverName: string, config: LoopHackConfig) {
+  const { hackServers, growServers, weakenServers } = config;
+
+  const isHackScript = hackServers.includes(serverName);
+  const isWeakenScript = weakenServers.includes(serverName);
+  const isGrowScript = growServers.includes(serverName);
+
+  if (isHackScript) {
+    return hackScriptPath;
+  } else if (isGrowScript) {
+    return growScriptPath;
+  } else if (isWeakenScript) {
+    return weakenScriptPath;
+  }
+  ns.toast('something went wrong..')
+  return
 }

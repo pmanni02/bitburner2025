@@ -5,15 +5,12 @@ import { growScriptPath, hackScriptPath, weakenScriptPath } from "/constants";
 import { Button } from "./Button";
 import { ServerDetails } from "./ServerDetails";
 
-const myWindow = eval("window") as Window & typeof globalThis;
-const React = myWindow.React;
+import React from '/lib/react'
 
-type Props = {
+export function LoopHackDashboard({ ns, config }: {
   ns: NS,
   config: LoopHackConfig
-}
-
-export function LoopHackDashboard({ ns, config }: Props) {
+}) {
   const [currentConfig, setCurrentConfig] = React.useState<LoopHackConfig>(config)
 
   return (

@@ -1,17 +1,13 @@
 import { NS } from "@ns";
 import { LoopHackConfig } from "/interfaces";
 import { serverPrompt } from "/utils/servers";
+import React from '/lib/react';
 
-const myWindow = eval("window") as Window & typeof globalThis;
-const React = myWindow.React;
-
-type Props = {
-  ns: NS,
-  config: LoopHackConfig,
-  serverNames: string[]
-}
-
-export function List({ ns, config, serverNames }: Props) {
+export function List({ ns, config, serverNames }: {
+  ns: NS;
+  config: LoopHackConfig;
+  serverNames: string[];
+}): React.JSX.Element[] {
   return (
     serverNames.map((serverName: string) => (
       <p key={serverName} onClick={() => serverPrompt(ns, serverName, config)}> {serverName}</p>

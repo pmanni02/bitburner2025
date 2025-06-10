@@ -1,13 +1,7 @@
 import { NS } from "@ns";
 import { MonitorDetails } from "/interfaces";
 import { MonitorDashboard } from "./MonitorDashboard";
-
-// note from template: accessing global window or document in bitburner costs 25GB each normally. 
-// this saves RAM for early UI convenience, sorry devs pls don't fix.
-const myWindow = eval("window") as Window & typeof globalThis;
-
-//  bitburner devs included React and ReactDOM in global window object!
-const React = myWindow.React;
+import React from '/lib/react'
 
 let RATE_OF_CHANGE = 0;
 let LAST_SERVER_AMOUNT = 1;
@@ -28,6 +22,7 @@ export async function main(ns: NS, targetServer: string | undefined) {
 
   ns.ui.openTail();
   ns.ui.resizeTail(380, 130);
+  ns.ui.moveTail(1200, 0)
   ns.ui.setTailTitle(serv + " monitor");
   ns.ui.setTailFontSize(10)
 

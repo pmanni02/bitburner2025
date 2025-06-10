@@ -1,18 +1,14 @@
 import { NS } from "@ns";
 import { LoopHackConfig } from "/interfaces";
 import { List } from "./List";
+import React from '/lib/react'
 
-const myWindow = eval("window") as Window & typeof globalThis;
-const React = myWindow.React;
-
-type Props = {
+export function ServerDetails({ ns, summary, config, serverNames }: {
   ns: NS,
   summary: string,
   serverNames: string[],
   config: LoopHackConfig
-}
-
-export function ServerDetails({ ns, summary, config, serverNames }: Props) {
+}) {
   return (
     <details open>
       <summary>{summary}</summary>

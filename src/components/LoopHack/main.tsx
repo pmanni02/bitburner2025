@@ -1,5 +1,5 @@
 import { NS } from "@ns";
-import { getNumThreads, nukeServer, readServerConfig, writeServerConfig } from "../../utils/helpers";
+import { copyAndExecScript, nukeServer, readServerConfig, writeServerConfig } from "../../utils/helpers";
 import { LoopHackConfig } from "../../interfaces";
 import { growScriptPath, weakenScriptPath, hackScriptPath } from "../../constants";
 import { LoopHackDashboard } from "./LoopHackDashboard";
@@ -45,19 +45,21 @@ export async function main(ns: NS): Promise<void> {
     ns.exec("/components/Monitor/main.js", "home", undefined, targetServer);
   }
 
-  // OPEN UI TO LIST SEVERS & MANUALLY BALANCE SCRIPTS
+  // OPEN UI TO LIST SEVERS & MANUALLY BALANCE SCRIPTS 
   await openHackUI(ns, config);
 }
 
 async function openHackUI(ns: NS, config: LoopHackConfig) {
   ns.ui.openTail();
   ns.ui.resizeTail(360, 355);
+  // ns.ui.setTailTitle('');
+
   while (ns.scriptRunning("/components/LoopHack/main.js", "home")) {
     ns.clearLog();
     ns.printRaw(
       <LoopHackDashboard ns={ns} config={config} />
     );
-    await ns.asleep(5000);
+    await ns.asleep(3000);
   }
 }
 
@@ -71,11 +73,7 @@ async function deployInitialScript(ns: NS, script: string, initialServers: strin
   ns.disableLog("ALL");
   for (let i = 0; i < initialServers.length; i++) {
     const curServ = initialServers[i];
-    const numThreads = getNumThreads(ns, curServ)
-
-    nukeServer(ns, curServ)
-    ns.scp(script, curServ);
-    ns.exec(script, curServ, numThreads - 1, targetServer); // (uses one less thread just to be safe)
+    copyAndExecScript(ns, curServ, targetServer, script)
 
     await ns.sleep(Math.random() * 500);
   }
