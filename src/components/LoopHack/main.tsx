@@ -1,7 +1,7 @@
 import { NS } from "@ns";
-import { nukeServer, readServerConfig, writeServerConfig } from "../../utils/helpers";
+import { getNumThreads, nukeServer, readServerConfig, writeServerConfig } from "../../utils/helpers";
 import { LoopHackConfig } from "../../interfaces";
-import { BASIC_SCRIPT_RAM_SIZE, growScriptPath, weakenScriptPath, hackScriptPath } from "../../constants";
+import { growScriptPath, weakenScriptPath, hackScriptPath } from "../../constants";
 import { LoopHackDashboard } from "./LoopHackDashboard";
 import React from '/lib/react'
 
@@ -71,8 +71,7 @@ async function deployInitialScript(ns: NS, script: string, initialServers: strin
   ns.disableLog("ALL");
   for (let i = 0; i < initialServers.length; i++) {
     const curServ = initialServers[i];
-    const { maxRam, ramUsed } = ns.getServer(curServ);
-    const numThreads = Math.floor((maxRam - ramUsed) / BASIC_SCRIPT_RAM_SIZE);
+    const numThreads = getNumThreads(ns, curServ)
 
     nukeServer(ns, curServ)
     ns.scp(script, curServ);
