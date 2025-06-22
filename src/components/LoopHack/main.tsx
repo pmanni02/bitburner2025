@@ -18,7 +18,7 @@ export async function main(ns: NS): Promise<void> {
 
   // INITIAL hack config with no augmentations
   let config: LoopHackConfig;
-  if (!existingConfig && args && args[0] === "init") {
+  if (args && args[0] === "init") {
     config = {
       growServers: ["n00dles", "sigma-cosmetics"],
       hackServers: [],

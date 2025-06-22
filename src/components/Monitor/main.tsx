@@ -1,10 +1,8 @@
 import { NS } from "@ns";
 import { MonitorDetails } from "/interfaces";
 import { MonitorDashboard } from "./MonitorDashboard";
-import React from '/lib/react'
+import React from '/lib/react';
 
-let RATE_OF_CHANGE = 0;
-let LAST_SERVER_AMOUNT = 1;
 
 /*eslint no-constant-condition: */
 export async function main(ns: NS, targetServer: string | undefined) {
@@ -37,7 +35,7 @@ export async function main(ns: NS, targetServer: string | undefined) {
   }
 }
 
-function getMonitorDetails(ns: NS, server: string): MonitorDetails {
+export function getMonitorDetails(ns: NS, server: string): MonitorDetails {
   const {
     moneyAvailable,
     moneyMax,
@@ -56,7 +54,8 @@ function getMonitorDetails(ns: NS, server: string): MonitorDetails {
   const fundedPercent = moneyAvailable && moneyMax ? ns.formatPercent((moneyAvailable / moneyMax)) : '';
   const hackedPercent = minDifficulty && hackDifficulty ? ns.formatPercent((minDifficulty / hackDifficulty)) : '';
   const hackLevel = hackDifficulty ? ns.formatNumber(hackDifficulty, 2) : '';
-  const growthEmoji = getRateOfChange(ns, server);
+  const rateOfChange = getRateOfChange(ns, server);
+  const growthEmoji = getRateOfChangeEmoji(rateOfChange)
 
   return {
     organizationName,
@@ -73,18 +72,24 @@ function getMonitorDetails(ns: NS, server: string): MonitorDetails {
 }
 
 function getRateOfChange(ns: NS, serverName: string) {
+  let lastServerAmount = 1;
   const currentAmount = ns.getServer(serverName).moneyAvailable;
 
+  let rateOfChange = 0
   if (currentAmount) {
-    RATE_OF_CHANGE = LAST_SERVER_AMOUNT - currentAmount;
-    LAST_SERVER_AMOUNT = currentAmount;
+    rateOfChange = lastServerAmount - currentAmount;
+    lastServerAmount = currentAmount;
   }
 
-  if (RATE_OF_CHANGE === 0) {
+  return rateOfChange;
+}
+
+function getRateOfChangeEmoji(rateOfChange: number) {
+  if (rateOfChange === 0) {
     return 8594 // →
-  } else if (RATE_OF_CHANGE > 0) {
+  } else if (rateOfChange > 0) {
     return 8600 // ↘
-  } else if (RATE_OF_CHANGE < 0) {
+  } else if (rateOfChange < 0) {
     return 8599 // ↗
   }
   return 8596 //↔

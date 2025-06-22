@@ -130,7 +130,7 @@ export const changeTargetServer = async (ns: NS, config: LoopHackConfig): Promis
   ns.tprint('new target server: ', newTargetServer);
 
   if (newTargetServer) {
-    const runningLoopHackUI = ns.getRunningScript('/components/LoopHack/main.js')
+    const runningLoopHackUI = ns.getRunningScript('/components/LoopHack/main.js', 'home')
     ns.tprint('runningLoopHackUI', runningLoopHackUI);
 
     // save updated config w/ new target
@@ -138,14 +138,17 @@ export const changeTargetServer = async (ns: NS, config: LoopHackConfig): Promis
     writeServerConfig(ns, config);
 
     // kill existing runing scripts
-    killRunningScripts(ns)
+    killRunningScripts(ns);
+
+    ns.exec('/components/LoopHack/main.js', 'home')
 
     // kill script running ui for old target
     if (runningLoopHackUI) {
-      ns.kill(runningLoopHackUI.pid)
-      ns.ui.closeTail(runningLoopHackUI.pid)
+      ns.kill(runningLoopHackUI.pid);
+      ns.ui.closeTail(runningLoopHackUI.pid);
+      ns.tprint('existing loopHackUI script killed');
     }
-    ns.exec('/components/LoopHack/main.js', 'home')
+    
   } else {
     ns.tprint('Please select new target server')
   }
@@ -173,17 +176,18 @@ export const serverPrompt = async (ns: NS, server: string, config: LoopHackConfi
     case "move to": {
       const newScript = await ns.prompt("Select script", { type: "select", choices: ["hack", "weaken", "grow"] }).then((input) => input.toString())
       ns.tprint(`replacing current script on ${server} with ${newScript}`);
+
       const currentHackScriptPath = getScriptGroupType(ns, server, config);
 
       //FIXME: remove if statement, replace with no-non-null-assertion elint
       if (currentHackScriptPath) {
         let updatedConfig = config
         if (newScript === "hack") {
-          updatedConfig = replaceScript(ns, currentHackScriptPath, hackScriptPath, config);
-        } else if(newScript === "grow") {
-          updatedConfig = replaceScript(ns, currentHackScriptPath, growScriptPath, config);
-        } else if(newScript === "weaken") {
-          updatedConfig = replaceScript(ns, currentHackScriptPath, weakenScriptPath, config);
+          updatedConfig = moveScript(ns, server, currentHackScriptPath, hackScriptPath, config);
+        } else if (newScript === "grow") {
+          updatedConfig = moveScript(ns, server, currentHackScriptPath, growScriptPath, config);
+        } else if (newScript === "weaken") {
+          updatedConfig = moveScript(ns, server, currentHackScriptPath, weakenScriptPath, config);
         }
         writeServerConfig(ns, updatedConfig);
       }
@@ -195,21 +199,7 @@ export const serverPrompt = async (ns: NS, server: string, config: LoopHackConfi
   return config;
 }
 
-export const replaceScript = (ns: NS, scriptToKill: string, scriptToStart: string, config: LoopHackConfig): LoopHackConfig => {
-  let serverName;
-  if (scriptToKill === growScriptPath) {
-    serverName = config.growServers.pop();
-  } else if (scriptToKill === hackScriptPath) {
-    if (config.hackServers.length) {
-      serverName = config.hackServers.pop();
-    } else {
-      serverName = config.weakenServers.pop();
-    }
-  } else if (scriptToKill === weakenScriptPath) {
-    serverName = config.weakenServers.pop();
-  }
-  writeServerConfig(ns, config);
-
+function redeployScript(ns: NS, scriptToKill: string, scriptToStart: string, config: LoopHackConfig, serverName: string) {
   ns.tprint("redeploying from " + scriptToKill + " to " + scriptToStart);
   if (serverName) {
     if (ns.killall(serverName)) {
@@ -226,6 +216,60 @@ export const replaceScript = (ns: NS, scriptToKill: string, scriptToStart: strin
       config.weakenServers.unshift(serverName);
     }
     writeServerConfig(ns, config);
+  }
+  return config;
+}
+
+/**
+ * Picks last server in script group and moves to new group
+ * @param ns 
+ * @param scriptToKill 
+ * @param scriptToStart 
+ * @param config 
+ * @returns 
+ */
+export const replaceScript = (ns: NS, scriptToKill: string, scriptToStart: string, config: LoopHackConfig): LoopHackConfig => {
+  let serverName;
+  if (scriptToKill === growScriptPath) {
+    serverName = config.growServers.pop();
+  } else if (scriptToKill === hackScriptPath) {
+    if (config.hackServers.length) {
+      serverName = config.hackServers.pop();
+    } else {
+      serverName = config.weakenServers.pop();
+    }
+  } else if (scriptToKill === weakenScriptPath) {
+    serverName = config.weakenServers.pop();
+  }
+  writeServerConfig(ns, config);
+
+  if (serverName) {
+    config = redeployScript(ns, scriptToKill, scriptToStart, config, serverName)
+  }
+  return config;
+}
+
+/**
+ * Picks specific server and moves to new group
+ * @param ns 
+ * @param serverName
+ * @param scriptToKill 
+ * @param scriptToStart 
+ * @param config
+ */
+export const moveScript = (ns: NS, serverName: string, scriptToKill: string, scriptToStart: string, config: LoopHackConfig) => {
+  const { weakenServers, growServers, hackServers } = config
+  if (scriptToKill === growScriptPath) {
+    growServers.splice(growServers.indexOf(serverName), 1);
+  } else if (scriptToKill === hackScriptPath) {
+    hackServers.splice(hackServers.indexOf(serverName), 1);
+  } else if (scriptToKill === weakenScriptPath) {
+    weakenServers.splice(weakenServers.indexOf(serverName), 1);
+  }
+  writeServerConfig(ns, config);
+
+  if (serverName) {
+    config = redeployScript(ns, scriptToKill, scriptToStart, config, serverName);
   }
   return config;
 }
@@ -247,3 +291,19 @@ function getScriptGroupType(ns: NS, serverName: string, config: LoopHackConfig) 
   ns.toast('something went wrong..')
   return
 }
+
+export const toggleAutomation = async (ns: NS, automationEnabled: boolean) => {
+  // check if automate script is already running
+  if (ns.getRunningScript('/components/LoopHack/automate.js', 'home') && automationEnabled) {
+    const scriptKilled = ns.scriptKill('/components/LoopHack/automate.js', 'home');
+    if (scriptKilled) {
+      ns.toast('Automation killed!');
+    } else {
+      ns.toast('Issue stopping automation');
+    }
+    return;
+  }
+
+  ns.exec("/components/LoopHack/automate.js", "home");
+}
+

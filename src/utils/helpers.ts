@@ -283,11 +283,10 @@ export function getNumThreads(ns: NS, serverName: string): number {
 }
 
 export function copyAndExecScript(ns: NS, serverName: string, targetServerName: string, scriptName: string, skipNukeServer?: boolean) {
-  const numThreads = getNumThreads(ns, serverName)
+  const numThreads = getNumThreads(ns, serverName);
   if (!skipNukeServer) {
-    nukeServer(ns, targetServerName);
+    nukeServer(ns, serverName);
   }
-
 
   ns.scp(scriptName, serverName);
   ns.exec(scriptName, serverName, numThreads - 1, targetServerName); // numThreads - 1 just to be safe

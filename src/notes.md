@@ -31,6 +31,14 @@
       - write data to txt OR json file (append)
       - to create chart, read from file and use external chart library
 
+9. update printCodingContracts helper fn
+  - add optional filter for coding contracts that have been solved
+  - create script to automatically solve specific contracts when found
+
+10. add new helper fn OR UI for top 3 hacking targets
+
+11. utilize ns.share() API to get bonus multiplier for reputation gain
+
 // MAIN BRANCHES
 1. master (main)
 2. loopHackV2 (UI and script updates to loopHack script)
