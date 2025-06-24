@@ -119,15 +119,40 @@ export const upgradePurchasedServer = async (ns: NS, config: LoopHackConfig): Pr
   return config;
 }
 
+/**
+ * Change target server of current hack
+ * @param ns 
+ * @param config 
+ * @returns top 3 servers with highest amount of money and less than half current security level
+ */
 export const changeTargetServer = async (ns: NS, config: LoopHackConfig): Promise<LoopHackConfig> => {
-  const availableTargets = getAlternativeTargetServers(ns)
-  const availableTargetNames = availableTargets.map((target) => target.hostname)
+  const currentHackLevel = ns.getHackingLevel();
+
+  const availableTargets = getAlternativeTargetServers(ns);
+  const targets = availableTargets.map((target) => {
+    return {
+      hostname: target.hostname,
+      moneyMax: target.moneyMax,
+      moneyAvailable: target.moneyAvailable,
+      // hackDifficulty: target.hackDifficulty,
+      requiredHackingSkill: target.requiredHackingSkill
+    }
+  });
+  const targetsWithLowSecurity = targets.filter((target) => {
+    return target.requiredHackingSkill && target.requiredHackingSkill > 1 && (target.requiredHackingSkill < currentHackLevel / 2)
+  });
+  const targetsWithMaxMoney: string[] = targetsWithLowSecurity.sort((a, b) => {
+    if (b.moneyAvailable && a.moneyAvailable) {
+      return b.moneyAvailable - a.moneyAvailable
+    }
+    return 0
+  }).slice(0, 4).map((target) => target.hostname);
+  ns.tprint('targetsWithMaxMoney', targetsWithMaxMoney)
 
   const newTargetServer = await ns.prompt("Select new target server", {
     type: "select",
-    choices: availableTargetNames
+    choices: targetsWithMaxMoney
   }).then((input) => input.toString());
-  ns.tprint('new target server: ', newTargetServer);
 
   if (newTargetServer) {
     const runningLoopHackUI = ns.getRunningScript('/components/LoopHack/main.js', 'home')
@@ -148,7 +173,7 @@ export const changeTargetServer = async (ns: NS, config: LoopHackConfig): Promis
       ns.ui.closeTail(runningLoopHackUI.pid);
       ns.tprint('existing loopHackUI script killed');
     }
-    
+
   } else {
     ns.tprint('Please select new target server')
   }
@@ -291,19 +316,3 @@ function getScriptGroupType(ns: NS, serverName: string, config: LoopHackConfig) 
   ns.toast('something went wrong..')
   return
 }
-
-export const toggleAutomation = async (ns: NS, automationEnabled: boolean) => {
-  // check if automate script is already running
-  if (ns.getRunningScript('/components/LoopHack/automate.js', 'home') && automationEnabled) {
-    const scriptKilled = ns.scriptKill('/components/LoopHack/automate.js', 'home');
-    if (scriptKilled) {
-      ns.toast('Automation killed!');
-    } else {
-      ns.toast('Issue stopping automation');
-    }
-    return;
-  }
-
-  ns.exec("/components/LoopHack/automate.js", "home");
-}
-

@@ -6,12 +6,37 @@ import { Button } from "./Button";
 import { ServerDetails } from "./ServerDetails";
 
 import React from '/lib/react'
+import { main } from "./automate";
+import { writeServerConfig } from "/utils/helpers";
 
 export function LoopHackDashboard({ ns, config }: {
   ns: NS,
   config: LoopHackConfig
 }) {
-  const [currentConfig, setCurrentConfig] = React.useState<LoopHackConfig>(config)
+  const [currentConfig, setCurrentConfig] = React.useState<LoopHackConfig>(config);
+
+  React.useEffect(() => {
+    config.isAutomated = false; // on load set isAutomated off
+    setCurrentConfig(config);
+  },[])
+
+  const toggleAutomate = (config: LoopHackConfig) => {
+    config.isAutomated = config.isAutomated ? !config.isAutomated : true;
+    setCurrentConfig(config);
+
+    let intervalId;
+    if (config.isAutomated) {
+      intervalId ??= setInterval(async () => {
+        const updatedConfig = await main(ns, currentConfig);
+        ns.tprint('automation running!!')
+        setCurrentConfig(updatedConfig);
+        writeServerConfig(ns, currentConfig); // write to file in case of error
+      }, 100000);
+    } else {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  }
 
   return (
     <html>
@@ -89,6 +114,13 @@ export function LoopHackDashboard({ ns, config }: {
             }
           }
         } />
+
+        <Button
+          id='automate'
+          style={{ backgroundColor: currentConfig.isAutomated ? 'green' : 'red' }}
+          name='Automate'
+          onClickFn={() => toggleAutomate(currentConfig)}
+        />
       </body>
     </html>
   )
