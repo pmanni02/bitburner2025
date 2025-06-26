@@ -1,66 +1,64 @@
 import { NS } from "@ns";
-import { nukeServer, readServerConfig, writeServerConfig } from "../../utils/helpers";
+import { copyAndExecScript, nukeServer, readServerConfig, writeServerConfig } from "../../utils/helpers";
 import { LoopHackConfig } from "../../interfaces";
-import { BASIC_SCRIPT_RAM_SIZE, growScriptPath, weakenScriptPath, hackScriptPath } from "../../constants";
+import { growScriptPath, weakenScriptPath, hackScriptPath } from "../../constants";
 import { LoopHackDashboard } from "./LoopHackDashboard";
+import React from '/lib/react'
 
 /*eslint no-constant-condition: */
-
-const myWindow = eval("window") as Window & typeof globalThis;
-const React = myWindow.React;
-
-let TARGET_SERVER = '';
 
 /**
  * Main fn - deploys initial scripts and opens UI
  * @param ns - Netscript
  */
 export async function main(ns: NS): Promise<void> {
+  ns.toast('Launching loop hack script!')
   const args = ns.args;
   const existingConfig: LoopHackConfig = readServerConfig(ns)[0]
 
   // INITIAL hack config with no augmentations
   let config: LoopHackConfig;
-  if (!existingConfig && args && args[0] === "init") {
+  if (args && args[0] === "init") {
     config = {
       growServers: ["n00dles", "sigma-cosmetics"],
       hackServers: [],
       weakenServers: ["joesguns"],
       targetServer: "foodnstuff"
     }
-    TARGET_SERVER = config.targetServer
     writeServerConfig(ns, config);
   } else {
     config = existingConfig;
-    TARGET_SERVER = existingConfig.targetServer
   }
   ns.disableLog("ALL");
 
   // Run available executables against target server from home server
-  nukeServer(ns, TARGET_SERVER)
+  nukeServer(ns, config.targetServer)
 
-  await deployInitialScript(ns, hackScriptPath, config.hackServers);
-  await deployInitialScript(ns, growScriptPath, config.growServers);
-  await deployInitialScript(ns, weakenScriptPath, config.weakenServers);
+  const { hackServers, growServers, weakenServers, targetServer } = config;
+
+  await deployInitialScript(ns, hackScriptPath, hackServers, targetServer);
+  await deployInitialScript(ns, growScriptPath, growServers, targetServer);
+  await deployInitialScript(ns, weakenScriptPath, weakenServers, targetServer);
 
   // OPEN UI FOR MONITORING TARGET SERVER
   if (!ns.getRunningScript("/components/Monitor/main.js", "home")) {
-    ns.exec("/components/Monitor/main.js", "home", undefined, TARGET_SERVER);
+    ns.exec("/components/Monitor/main.js", "home", undefined, targetServer);
   }
 
-  // OPEN UI TO LIST SEVERS & MANUALLY BALANCE SCRIPTS
+  // OPEN UI TO LIST SEVERS & MANUALLY BALANCE SCRIPTS 
   await openHackUI(ns, config);
 }
 
 async function openHackUI(ns: NS, config: LoopHackConfig) {
   ns.ui.openTail();
   ns.ui.resizeTail(360, 355);
+
   while (ns.scriptRunning("/components/LoopHack/main.js", "home")) {
     ns.clearLog();
     ns.printRaw(
       <LoopHackDashboard ns={ns} config={config} />
     );
-    await ns.asleep(5000);
+    await ns.asleep(3000);
   }
 }
 
@@ -70,16 +68,11 @@ async function openHackUI(ns: NS, config: LoopHackConfig) {
  * @param script grow/hack/weaken scripts
  * @param initialServers array of servers that will run the provided script
  */
-async function deployInitialScript(ns: NS, script: string, initialServers: string[]): Promise<void> {
+async function deployInitialScript(ns: NS, script: string, initialServers: string[], targetServer: string): Promise<void> {
   ns.disableLog("ALL");
   for (let i = 0; i < initialServers.length; i++) {
     const curServ = initialServers[i];
-    const { maxRam, ramUsed } = ns.getServer(curServ);
-    const numThreads = Math.floor((maxRam - ramUsed) / BASIC_SCRIPT_RAM_SIZE);
-
-    nukeServer(ns, curServ)
-    ns.scp(script, curServ);
-    ns.exec(script, curServ, numThreads - 1, TARGET_SERVER); // (uses one less thread just to be safe)
+    copyAndExecScript(ns, curServ, targetServer, script)
 
     await ns.sleep(Math.random() * 500);
   }

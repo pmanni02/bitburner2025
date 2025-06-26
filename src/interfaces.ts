@@ -4,6 +4,7 @@ export interface LoopHackConfig {
   hackServers: string[],
   weakenServers: string[],
   growServers: string[],
+  isAutomated?: boolean
 }
 
 /**Represents all the files for a single server */
