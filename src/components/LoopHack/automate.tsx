@@ -12,6 +12,7 @@ import { FUNDED_PERCENT_THRESHOLD, growScriptPath, HACK_PERCENT_THRESHOLD, hackS
 // TODO: 
 //  - update logic to move largest resource eg: if there are 2 hack servers
 //  - first move the larger server instead of picking a random server
+//  - break down logic into smaller functions
 
 export async function main(ns: NS, config: LoopHackConfig): Promise<LoopHackConfig> {
   ns.toast('Launching automated loop hack script!');

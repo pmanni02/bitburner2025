@@ -52,7 +52,6 @@ export async function main(ns: NS): Promise<void> {
 async function openHackUI(ns: NS, config: LoopHackConfig) {
   ns.ui.openTail();
   ns.ui.resizeTail(360, 355);
-  // ns.ui.setTailTitle('');
 
   while (ns.scriptRunning("/components/LoopHack/main.js", "home")) {
     ns.clearLog();

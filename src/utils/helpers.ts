@@ -273,7 +273,7 @@ export function readServerConfig(ns: NS): LoopHackConfig[] {
  * @param config LoopHackConfig
  */
 export function writeServerConfig(ns: NS, config: LoopHackConfig) {
-  ns.toast("Saving current servers...");
+  // ns.toast("Saving current servers...");
   ns.write("loopHackConfig.json", "[" + JSON.stringify(config) + "]", "w");
 }
 

@@ -18,11 +18,13 @@ export function LoopHackDashboard({ ns, config }: {
   React.useEffect(() => {
     config.isAutomated = false; // on load set isAutomated off
     setCurrentConfig(config);
+    // writeServerConfig(ns, config)
   },[])
 
   const toggleAutomate = (config: LoopHackConfig) => {
     config.isAutomated = config.isAutomated ? !config.isAutomated : true;
     setCurrentConfig(config);
+    ns.tprint('automate togged to: ', config.isAutomated)
 
     let intervalId;
     if (config.isAutomated) {
