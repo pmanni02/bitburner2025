@@ -1,6 +1,6 @@
 import { NS } from "@ns";
-import { BASIC_SCRIPT_RAM_SIZE, RAM_CHOICES, growScriptPath, weakenScriptPath, hackScriptPath } from "/constants";
-import { getAlternativeTargetServers, getServersReadyToUseForHacking, killRunningScripts, nukeServer, writeServerConfig } from "./helpers";
+import { RAM_CHOICES, growScriptPath, weakenScriptPath, hackScriptPath } from "/constants";
+import { copyAndExecScript, getAlternativeTargetServers, getServersReadyToUseForHacking, killRunningScripts, writeServerConfig } from "./helpers";
 import { LoopHackConfig } from "/interfaces";
 
 export const buyNewServer = async (ns: NS, config: LoopHackConfig): Promise<LoopHackConfig> => {
@@ -10,9 +10,9 @@ export const buyNewServer = async (ns: NS, config: LoopHackConfig): Promise<Loop
   const serverSize = await ns.prompt("Please select the server size", {
     type: "select",
     choices: RAM_CHOICES
-  });
+  }).then((input) => input.toString());
 
-  const ram = Number.parseInt(serverSize.toString()) ? Number.parseInt(serverSize.toString()) : 8;
+  const ram = Number.parseInt(serverSize) ? Number.parseInt(serverSize) : 8;
   const purchasedServers = ns.getPurchasedServers();
   const canPurchase = ns.getServerMoneyAvailable("home") > ns.getPurchasedServerCost(ram);
 
@@ -20,11 +20,10 @@ export const buyNewServer = async (ns: NS, config: LoopHackConfig): Promise<Loop
   if (purchasedServers.length < ns.getPurchasedServerLimit() && canPurchase) {
     const serverNum = purchasedServers.length ? purchasedServers.length : 0;
     const newServer = ns.purchaseServer('serv-' + ram + '-' + serverNum, ram);
-    const numThreads = Math.floor(ram / BASIC_SCRIPT_RAM_SIZE);
 
     // default to copying/running grow script
-    ns.scp(growScriptPath, newServer);
-    ns.exec(growScriptPath, newServer, numThreads - 1, config.targetServer);
+    copyAndExecScript(ns, newServer, config.targetServer, growScriptPath)
+
     ns.tprint("deployed new server: " + newServer + " with grow script");
 
     config.growServers.unshift(newServer);
@@ -38,8 +37,6 @@ export const buyNewServer = async (ns: NS, config: LoopHackConfig): Promise<Loop
 }
 
 export const addNewServer = (ns: NS, config: LoopHackConfig): LoopHackConfig | undefined => {
-  ns.toast("adding server...");
-
   const potentialServersToHack = getServersReadyToUseForHacking(ns, true);
   const currentServers = [...config.growServers, ...config.hackServers, ...config.weakenServers];
 
@@ -54,12 +51,8 @@ export const addNewServer = (ns: NS, config: LoopHackConfig): LoopHackConfig | u
 
   const newServer = toBeHacked.shift();
   if (newServer && newServer.hostname) {
-    const numThreads = Math.floor(newServer?.maxRam / BASIC_SCRIPT_RAM_SIZE);
-    nukeServer(ns, config.targetServer);
-
     // default to copying/running grow script
-    ns.scp(growScriptPath, newServer.hostname);
-    ns.exec(growScriptPath, newServer.hostname, numThreads - 1, config.targetServer);
+    copyAndExecScript(ns, newServer.hostname, config.targetServer, growScriptPath)
 
     ns.tprint("deployed new server: " + newServer.hostname + " with grow script");
     config.growServers.unshift(newServer.hostname);
@@ -80,41 +73,41 @@ export const upgradePurchasedServer = async (ns: NS, config: LoopHackConfig): Pr
   const serverInput = await ns.prompt("Select server to upgrade", {
     type: "select",
     choices: purchasedServers
-  });
+  }).then((input) => input.toString());
 
-  const currentRam = ns.getServer(serverInput.toString()).maxRam;
+  const currentRam = ns.getServer(serverInput).maxRam;
   const choices = RAM_CHOICES.filter((i) => Number.parseInt(i) > currentRam)
   const ramInput = await ns.prompt("Select RAM", {
     type: "select",
     choices: choices
-  });
-  const newRam = Number.parseInt(ramInput.toString()) ? Number.parseInt(ramInput.toString()) : 8;
+  }).then((input) => input.toString());
+  const newRam = Number.parseInt(ramInput) ? Number.parseInt(ramInput) : 8;
 
   let newName = "";
-  if (serverInput && ramInput && ns.upgradePurchasedServer(serverInput.toString(), newRam)) {
-    const endIndex = serverInput.toString().lastIndexOf("-");
-    newName = serverInput.toString().substring(0, 5) + newRam + serverInput.toString().slice(endIndex)
-    ns.renamePurchasedServer(serverInput.toString(), newName);
-    ns.toast("upgraded server " + serverInput.toString() + " with " + newRam);
+  if (serverInput && ramInput && ns.upgradePurchasedServer(serverInput, newRam)) {
+    const endIndex = serverInput.lastIndexOf("-");
+    newName = serverInput.substring(0, 5) + newRam + serverInput.slice(endIndex)
+    ns.renamePurchasedServer(serverInput, newName);
+    ns.toast("upgraded server " + serverInput + " with " + newRam);
 
-    const isHackScript = config.hackServers.includes(serverInput.toString());
-    const isWeakenScript = config.weakenServers.includes(serverInput.toString());
-    const isGrowScript = config.growServers.includes(serverInput.toString());
+    const isHackScript = config.hackServers.includes(serverInput);
+    const isWeakenScript = config.weakenServers.includes(serverInput);
+    const isGrowScript = config.growServers.includes(serverInput);
 
     const getServerIndex = (servers: string[], serverToFind: string) => {
       return servers.findIndex((s) => s === serverToFind.toString())
     }
 
     if (isHackScript) {
-      const index = getServerIndex(config.hackServers, serverInput.toString())
+      const index = getServerIndex(config.hackServers, serverInput)
       config.hackServers.splice(index, 1);
       config.hackServers.push(newName);
     } else if (isWeakenScript) {
-      const index = getServerIndex(config.weakenServers, serverInput.toString())
+      const index = getServerIndex(config.weakenServers, serverInput)
       config.weakenServers.splice(index, 1);
       config.weakenServers.push(newName);
     } else if (isGrowScript) {
-      const index = getServerIndex(config.growServers, serverInput.toString())
+      const index = getServerIndex(config.growServers, serverInput)
       config.growServers.splice(index, 1);
       config.growServers.push(newName);
     }
@@ -126,33 +119,61 @@ export const upgradePurchasedServer = async (ns: NS, config: LoopHackConfig): Pr
   return config;
 }
 
+/**
+ * Change target server of current hack
+ * @param ns 
+ * @param config 
+ * @returns top 3 servers with highest amount of money and less than half current security level
+ */
 export const changeTargetServer = async (ns: NS, config: LoopHackConfig): Promise<LoopHackConfig> => {
-  const availableTargets = getAlternativeTargetServers(ns)
-  const availableTargetNames = availableTargets.map((target) => target.hostname)
-  
+  const currentHackLevel = ns.getHackingLevel();
+
+  const availableTargets = getAlternativeTargetServers(ns);
+  const targets = availableTargets.map((target) => {
+    return {
+      hostname: target.hostname,
+      moneyMax: target.moneyMax,
+      moneyAvailable: target.moneyAvailable,
+      // hackDifficulty: target.hackDifficulty,
+      requiredHackingSkill: target.requiredHackingSkill
+    }
+  });
+  const targetsWithLowSecurity = targets.filter((target) => {
+    return target.requiredHackingSkill && target.requiredHackingSkill > 1 && (target.requiredHackingSkill < currentHackLevel / 2)
+  });
+  const targetsWithMaxMoney: string[] = targetsWithLowSecurity.sort((a, b) => {
+    if (b.moneyAvailable && a.moneyAvailable) {
+      return b.moneyAvailable - a.moneyAvailable
+    }
+    return 0
+  }).slice(0, 4).map((target) => target.hostname);
+  ns.tprint('targetsWithMaxMoney', targetsWithMaxMoney)
+
   const newTargetServer = await ns.prompt("Select new target server", {
     type: "select",
-    choices: availableTargetNames
-  });
-  ns.tprint('new target server: ', newTargetServer);
+    choices: targetsWithMaxMoney
+  }).then((input) => input.toString());
 
   if (newTargetServer) {
-    const runningLoopHackUI = ns.getRunningScript('/components/LoopHack/main.js')
+    const runningLoopHackUI = ns.getRunningScript('/components/LoopHack/main.js', 'home')
     ns.tprint('runningLoopHackUI', runningLoopHackUI);
 
     // save updated config w/ new target
-    config.targetServer = newTargetServer.toString();
+    config.targetServer = newTargetServer;
     writeServerConfig(ns, config);
 
     // kill existing runing scripts
-    killRunningScripts(ns)
+    killRunningScripts(ns);
+
+    ns.exec('/components/LoopHack/main.js', 'home')
 
     // kill script running ui for old target
     if (runningLoopHackUI) {
-      ns.kill(runningLoopHackUI.pid)
-      ns.ui.closeTail(runningLoopHackUI.pid)
+      ns.kill(runningLoopHackUI.pid);
+      ns.ui.closeTail(runningLoopHackUI.pid);
+      ns.tprint('existing loopHackUI script killed');
     }
-    ns.exec('/components/LoopHack/main.js', 'home')
+
   } else {
     ns.tprint('Please select new target server')
   }
@@ -160,24 +181,78 @@ export const changeTargetServer = async (ns: NS, config: LoopHackConfig): Promis
 }
 
 export const serverPrompt = async (ns: NS, server: string, config: LoopHackConfig): Promise<LoopHackConfig> => {
-  const choice = await ns.prompt("Select a server option", { type: "select", choices: ["stop scripts"] });
+  const choice = await ns.prompt("Select a server option", { type: "select", choices: ["stop scripts", "move to"] }).then((input) => input.toString());
+  const { growServers, weakenServers, hackServers } = config
 
-  if (choice.toString() === "stop scripts") {
-    ns.tprint("killing scripts on " + server);
-    ns.killall(server);
+  switch (choice) {
+    case "stop scripts":
+      ns.tprint("killing scripts on " + server);
+      ns.killall(server);
 
-    if (config.growServers.includes(server)) {
-      config.growServers.splice(config.growServers.indexOf(server), 1);
-    } else if (config.hackServers.includes(server)) {
-      config.hackServers.splice(config.hackServers.indexOf(server), 1);
-    } else if (config.weakenServers.includes(server)) {
-      config.weakenServers.splice(config.weakenServers.indexOf(server), 1);
+      if (growServers.includes(server)) {
+        growServers.splice(growServers.indexOf(server), 1);
+      } else if (hackServers.includes(server)) {
+        hackServers.splice(hackServers.indexOf(server), 1);
+      } else if (weakenServers.includes(server)) {
+        weakenServers.splice(weakenServers.indexOf(server), 1);
+      }
+      writeServerConfig(ns, config);
+      break;
+    case "move to": {
+      const newScript = await ns.prompt("Select script", { type: "select", choices: ["hack", "weaken", "grow"] }).then((input) => input.toString())
+      ns.tprint(`replacing current script on ${server} with ${newScript}`);
+
+      const currentHackScriptPath = getScriptGroupType(ns, server, config);
+
+      //FIXME: remove if statement, replace with no-non-null-assertion elint
+      if (currentHackScriptPath) {
+        let updatedConfig = config
+        if (newScript === "hack") {
+          updatedConfig = moveScript(ns, server, currentHackScriptPath, hackScriptPath, config);
+        } else if (newScript === "grow") {
+          updatedConfig = moveScript(ns, server, currentHackScriptPath, growScriptPath, config);
+        } else if (newScript === "weaken") {
+          updatedConfig = moveScript(ns, server, currentHackScriptPath, weakenScriptPath, config);
+        }
+        writeServerConfig(ns, updatedConfig);
+      }
+    }
+      break;
+    default:
+      break;
+  }
+  return config;
+}
+
+function redeployScript(ns: NS, scriptToKill: string, scriptToStart: string, config: LoopHackConfig, serverName: string) {
+  ns.tprint("redeploying from " + scriptToKill + " to " + scriptToStart);
+  if (serverName) {
+    if (ns.killall(serverName)) {
+      ns.rm(scriptToKill, serverName);
+    }
+
+    copyAndExecScript(ns, serverName, config.targetServer, scriptToStart, true)
+
+    if (scriptToStart === hackScriptPath) {
+      config.hackServers.unshift(serverName);
+    } else if (scriptToStart === growScriptPath) {
+      config.growServers.unshift(serverName);
+    } else if (scriptToStart === weakenScriptPath) {
+      config.weakenServers.unshift(serverName);
     }
     writeServerConfig(ns, config);
   }
   return config;
 }
 
+/**
+ * Picks last server in script group and moves to new group
+ * @param ns 
+ * @param scriptToKill 
+ * @param scriptToStart 
+ * @param config 
+ * @returns 
+ */
 export const replaceScript = (ns: NS, scriptToKill: string, scriptToStart: string, config: LoopHackConfig): LoopHackConfig => {
   let serverName;
   if (scriptToKill === growScriptPath) {
@@ -193,25 +268,51 @@ export const replaceScript = (ns: NS, scriptToKill: string, scriptToStart: strin
   }
   writeServerConfig(ns, config);
 
-  ns.toast("redeploying from " + scriptToKill + " to " + scriptToStart);
   if (serverName) {
-    if (ns.killall(serverName)) {
-      ns.rm(scriptToKill, serverName);
-    }
-    const { maxRam, ramUsed } = ns.getServer(serverName);
-    const numThreads = Math.floor((maxRam - ramUsed) / BASIC_SCRIPT_RAM_SIZE);
-
-    ns.scp(scriptToStart, serverName);
-    ns.exec(scriptToStart, serverName, numThreads, config.targetServer);
-
-    if (scriptToStart === hackScriptPath) {
-      config.hackServers.unshift(serverName);
-    } else if (scriptToStart === growScriptPath) {
-      config.growServers.unshift(serverName);
-    } else if (scriptToStart === weakenScriptPath) {
-      config.weakenServers.unshift(serverName);
-    }
-    writeServerConfig(ns, config);
+    config = redeployScript(ns, scriptToKill, scriptToStart, config, serverName)
   }
   return config;
+}
+
+/**
+ * Picks specific server and moves to new group
+ * @param ns 
+ * @param serverName
+ * @param scriptToKill 
+ * @param scriptToStart 
+ * @param config
+ */
+export const moveScript = (ns: NS, serverName: string, scriptToKill: string, scriptToStart: string, config: LoopHackConfig) => {
+  const { weakenServers, growServers, hackServers } = config
+  if (scriptToKill === growScriptPath) {
+    growServers.splice(growServers.indexOf(serverName), 1);
+  } else if (scriptToKill === hackScriptPath) {
+    hackServers.splice(hackServers.indexOf(serverName), 1);
+  } else if (scriptToKill === weakenScriptPath) {
+    weakenServers.splice(weakenServers.indexOf(serverName), 1);
+  }
+  writeServerConfig(ns, config);
+
+  if (serverName) {
+    config = redeployScript(ns, scriptToKill, scriptToStart, config, serverName);
+  }
+  return config;
+}
+
+function getScriptGroupType(ns: NS, serverName: string, config: LoopHackConfig) {
+  const { hackServers, growServers, weakenServers } = config;
+
+  const isHackScript = hackServers.includes(serverName);
+  const isWeakenScript = weakenServers.includes(serverName);
+  const isGrowScript = growServers.includes(serverName);
+
+  if (isHackScript) {
+    return hackScriptPath;
+  } else if (isGrowScript) {
+    return growScriptPath;
+  } else if (isWeakenScript) {
+    return weakenScriptPath;
+  }
+  ns.toast('something went wrong..')
+  return
 }

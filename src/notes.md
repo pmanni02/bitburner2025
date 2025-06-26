@@ -4,18 +4,18 @@
 
 2. create script to find Coding contracts (DONE)
 
-3. update loopHack to automate looking up the best targetServer
+3. update loopHack to automate looking up the best targetServer (DONE)
 
 4. create script to kill all running scripts without resetting funds (DONE)
 
 5. add num threads to loopHack UI -> to get a better sense of optimal proportions (DONE)
 
-6. create loopHackV2
+6. create loopHackV2 (DONE)
     - redo UI (create drop down menu for server lists)                            (DONE)
     - make server names clickable -> open toast for more options (DONE)
       - add ability to manually change script type for a single server (ie: click on the server and choose either hack/grow/weaken option)
     - add button to change target (DONE)
-    - add button to enable/disable basic automation
+    - add button to enable/disable basic automation (DONE)
       - enabling the button -> update scripts based on basic security/available funds (instead of manually)
       - disabling the button -> scripts only can be updated manually
 
@@ -30,6 +30,12 @@
     - add button to display chart showing earnings over time -> to track trends
       - write data to txt OR json file (append)
       - to create chart, read from file and use external chart library
+
+9. update printCodingContracts helper fn
+  - add optional filter for coding contracts that have been solved
+  - create script to automatically solve specific contracts when found
+
+11. utilize ns.share() API to get bonus multiplier for reputation gain
 
 // MAIN BRANCHES
 1. master (main)

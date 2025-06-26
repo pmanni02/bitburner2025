@@ -1,6 +1,6 @@
 import { NS, Server } from "@ns";
 import { LoopHackConfig, ServerFile } from "../interfaces";
-import { growScriptPath, hackScriptPath, weakenScriptPath } from "/constants";
+import { BASIC_SCRIPT_RAM_SIZE, growScriptPath, hackScriptPath, weakenScriptPath } from "/constants";
 
 /**
  * @param ns @param {AutocompleteData} data
@@ -196,11 +196,12 @@ export function nukeServer(ns: NS, hostname: string) {
  * @param ns Netscript
  * @returns List of servers that had scripts running
  */
-export function killRunningScripts(ns: NS): Server[] { 
-  ns.tprint('killing scripts for...')
+export function killRunningScripts(ns: NS): Server[] {
+  ns.disableLog("ALL");
+  ns.toast('killing scripts for...')
 
   scanServers(ns);
-  const list = importServerList(ns); 
+  const list = importServerList(ns);
 
   let hasScriptsRunning: Server[] = [];
   const scripts = [
@@ -216,7 +217,7 @@ export function killRunningScripts(ns: NS): Server[] {
   }
 
   for (const i in hasScriptsRunning) {
-    ns.tprint("killing scripts on " + hasScriptsRunning[i].hostname)
+    // ns.tprint("killing scripts on " + hasScriptsRunning[i].hostname) 
     ns.killall(hasScriptsRunning[i].hostname);
   }
 
@@ -235,7 +236,7 @@ async function printCodingContracts(ns: NS) {
   // Optional filter for specific contract
   const contractNameFilter = await ns.prompt("Which contract?", {
     "type": "text",
-  })
+  }).then((input) => input.toString())
 
   if (serverFiles) {
     serverFiles.forEach((server: ServerFile) => {
@@ -272,6 +273,21 @@ export function readServerConfig(ns: NS): LoopHackConfig[] {
  * @param config LoopHackConfig
  */
 export function writeServerConfig(ns: NS, config: LoopHackConfig) {
-  ns.toast("Saving current servers...");
+  // ns.toast("Saving current servers...");
   ns.write("loopHackConfig.json", "[" + JSON.stringify(config) + "]", "w");
+}
+
+export function getNumThreads(ns: NS, serverName: string): number {
+  const { maxRam, ramUsed } = ns.getServer(serverName);
+  return Math.floor((maxRam - ramUsed) / BASIC_SCRIPT_RAM_SIZE);
+}
+
+export function copyAndExecScript(ns: NS, serverName: string, targetServerName: string, scriptName: string, skipNukeServer?: boolean) {
+  const numThreads = getNumThreads(ns, serverName);
+  if (!skipNukeServer) {
+    nukeServer(ns, serverName);
+  }
+
+  ns.scp(scriptName, serverName);
+  ns.exec(scriptName, serverName, numThreads - 1, targetServerName); // numThreads - 1 just to be safe
 }

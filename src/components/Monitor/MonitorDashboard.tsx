@@ -1,12 +1,9 @@
 import { MonitorDetails } from "/interfaces";
-const myWindow = eval("window") as Window & typeof globalThis;
-const React = myWindow.React;
+import React from '/lib/react'
 
-type Props = {
+export function MonitorDashboard({ monitorDetails }: {
   monitorDetails: MonitorDetails
-}
-
-export function MonitorDashboard({ monitorDetails }: Props) {
+}) {
   const {
     organizationName,
     availableFunds,
@@ -21,17 +18,14 @@ export function MonitorDashboard({ monitorDetails }: Props) {
   } = monitorDetails;
 
   return (
-    <html>
-      <head>
-        <meta charSet="utf-8"></meta>
-      </head>
-
+    <div>
+      <meta charSet="utf-8"></meta>
       <body>
         <p>{organizationName} (🌱{serverGrowth} {String.fromCodePoint(growthEmoji)})</p>
 
         <p>  💰 {availableFunds}, {fundedPercent} | 🧑‍💻 {hackLevel}, {hackedPercent}</p>
         <p>  💻: {hackTime} secs | 📈: {growTime} secs | 📉: {weakenTime} secs</p>
       </body>
-    </html>
+    </div>
   );
 }

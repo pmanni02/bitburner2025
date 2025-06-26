@@ -5,16 +5,40 @@ import { growScriptPath, hackScriptPath, weakenScriptPath } from "/constants";
 import { Button } from "./Button";
 import { ServerDetails } from "./ServerDetails";
 
-const myWindow = eval("window") as Window & typeof globalThis;
-const React = myWindow.React;
+import React from '/lib/react'
+import { main } from "./automate";
+import { writeServerConfig } from "/utils/helpers";
 
-type Props = {
+export function LoopHackDashboard({ ns, config }: {
   ns: NS,
   config: LoopHackConfig
-}
+}) {
+  const [currentConfig, setCurrentConfig] = React.useState<LoopHackConfig>(config);
 
-export function LoopHackDashboard({ ns, config }: Props) {
-  const [currentConfig, setCurrentConfig] = React.useState<LoopHackConfig>(config)
+  React.useEffect(() => {
+    config.isAutomated = false; // on load set isAutomated off
+    setCurrentConfig(config);
+    // writeServerConfig(ns, config)
+  },[])
+
+  const toggleAutomate = (config: LoopHackConfig) => {
+    config.isAutomated = config.isAutomated ? !config.isAutomated : true;
+    setCurrentConfig(config);
+    ns.tprint('automate togged to: ', config.isAutomated)
+
+    let intervalId;
+    if (config.isAutomated) {
+      intervalId ??= setInterval(async () => {
+        const updatedConfig = await main(ns, currentConfig);
+        ns.tprint('automation running!!')
+        setCurrentConfig(updatedConfig);
+        writeServerConfig(ns, currentConfig); // write to file in case of error
+      }, 100000);
+    } else {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  }
 
   return (
     <html>
@@ -92,6 +116,13 @@ export function LoopHackDashboard({ ns, config }: Props) {
             }
           }
         } />
+
+        <Button
+          id='automate'
+          style={{ backgroundColor: currentConfig.isAutomated ? 'green' : 'red' }}
+          name='Automate'
+          onClickFn={() => toggleAutomate(currentConfig)}
+        />
       </body>
     </html>
   )

@@ -1,15 +1,13 @@
-const myWindow = eval("window") as Window & typeof globalThis;
-const React = myWindow.React;
+import React from '/lib/react'
 
-type Props = {
+export function Button({ id, style, name, onClickFn }: {
   id: string,
+  style?: Record<string, string>,
   name: string,
   onClickFn: () => void
-}
-
-export function Button({ id, name, onClickFn }: Props) {
+}) {
   return (
-    <button id={id} onClick={onClickFn}>
+    <button id={id} style={style} onClick={onClickFn}>
       {name}
     </button>
   )
