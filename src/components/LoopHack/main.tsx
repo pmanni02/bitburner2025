@@ -14,7 +14,7 @@ import React from '/lib/react'
 export async function main(ns: NS): Promise<void> {
   ns.toast('Launching loop hack script!')
   const args = ns.args;
-  const existingConfig: LoopHackConfig = readServerConfig(ns)[0]
+  const existingConfig: LoopHackConfig = readServerConfig(ns)[0];
 
   // INITIAL hack config with no augmentations
   let config: LoopHackConfig;
@@ -29,6 +29,7 @@ export async function main(ns: NS): Promise<void> {
   } else {
     config = existingConfig;
   }
+  config.isAutomated = false; // turn off automation on load
   ns.disableLog("ALL");
 
   // Run available executables against target server from home server
