@@ -3,6 +3,8 @@ import { MonitorDetails } from "/interfaces";
 import { MonitorDashboard } from "./MonitorDashboard";
 import React from '/lib/react';
 
+let LAST_SERVER_AMOUNT = 1;
+let CURRENT_AMOUNT: number | undefined = 1;
 
 /*eslint no-constant-condition: */
 export async function main(ns: NS, targetServer: string | undefined) {
@@ -72,13 +74,12 @@ export function getMonitorDetails(ns: NS, server: string): MonitorDetails {
 }
 
 function getRateOfChange(ns: NS, serverName: string) {
-  let lastServerAmount = 1;
-  const currentAmount = ns.getServer(serverName).moneyAvailable;
+  CURRENT_AMOUNT = ns.getServer(serverName).moneyAvailable;
 
   let rateOfChange = 0
-  if (currentAmount) {
-    rateOfChange = lastServerAmount - currentAmount;
-    lastServerAmount = currentAmount;
+  if (CURRENT_AMOUNT) {
+    rateOfChange = LAST_SERVER_AMOUNT - CURRENT_AMOUNT;
+    LAST_SERVER_AMOUNT = CURRENT_AMOUNT;
   }
 
   return rateOfChange;
