@@ -1,7 +1,7 @@
 import { NS } from "@ns";
 import { MonitorDetails } from "/interfaces";
-import { MonitorDashboard } from "./MonitorDashboard";
 import React from '/lib/react';
+import { MonitorV2 } from "./MonitorV2";
 
 let LAST_SERVER_AMOUNT = 1;
 let CURRENT_AMOUNT: number | undefined = 1;
@@ -21,7 +21,7 @@ export async function main(ns: NS, targetServer: string | undefined) {
   }
 
   ns.ui.openTail();
-  ns.ui.resizeTail(380, 130);
+  ns.ui.resizeTail(150, 200);
   ns.ui.moveTail(1200, 0)
   ns.ui.setTailTitle(serv + " monitor");
   ns.ui.setTailFontSize(10)
@@ -31,7 +31,9 @@ export async function main(ns: NS, targetServer: string | undefined) {
     ns.clearLog();
 
     ns.printRaw(
-      <MonitorDashboard monitorDetails={monitorDetails} />
+      <div>
+        <MonitorV2 monitorDetails={monitorDetails} />
+      </div>
     )
     await ns.asleep(1000);
   }

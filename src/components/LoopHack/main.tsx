@@ -3,7 +3,7 @@ import { copyAndExecScript, nukeServer, readServerConfig, writeServerConfig } fr
 import { LoopHackConfig } from "../../interfaces";
 import { growScriptPath, weakenScriptPath, hackScriptPath } from "../../constants";
 import { LoopHackDashboard } from "./LoopHackDashboard";
-import React from '/lib/react'
+import React from '/lib/react';
 
 /*eslint no-constant-condition: */
 
@@ -57,7 +57,10 @@ async function openHackUI(ns: NS, config: LoopHackConfig) {
   while (ns.scriptRunning("/components/LoopHack/main.js", "home")) {
     ns.clearLog();
     ns.printRaw(
-      <LoopHackDashboard ns={ns} config={config} />
+      <div>
+        <LoopHackDashboard ns={ns} config={config} />
+        {/* <LoopHackV2 ns={ns} config={config} /> */}
+      </div>
     );
     await ns.asleep(3000);
   }
