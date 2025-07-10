@@ -4,9 +4,8 @@ import { addNewServer, buyNewServer, changeTargetServer, replaceScript, upgradeP
 import { growScriptPath, hackScriptPath, weakenScriptPath } from "/constants";
 import { Button } from "./Button";
 import { ServerDetails } from "./ServerDetails";
-
-import React from '/lib/react'
-import { main } from "./automate";
+import React from '/lib/react';
+import { main as runAutomateScript } from "./automate";
 import { writeServerConfig } from "/utils/helpers";
 
 export function LoopHackDashboard({ ns, config }: {
@@ -14,28 +13,25 @@ export function LoopHackDashboard({ ns, config }: {
   config: LoopHackConfig
 }) {
   const [currentConfig, setCurrentConfig] = React.useState<LoopHackConfig>(config);
+  const [automate, setAutomate] = React.useState<boolean>(config.isAutomated ? config.isAutomated : false);
 
-  React.useEffect(() => {
-    config.isAutomated = false; // on load set isAutomated off
-    setCurrentConfig(config);
-    // writeServerConfig(ns, config)
-  },[])
-
-  const toggleAutomate = (config: LoopHackConfig) => {
-    config.isAutomated = config.isAutomated ? !config.isAutomated : true;
-    setCurrentConfig(config);
-    ns.tprint('automate togged to: ', config.isAutomated)
+  const toggleAutomate = () => {
+    const updatedAutomate = !automate;
+    config.isAutomated = updatedAutomate;
+    ns.tprint('config.isAutomated: ', config.isAutomated)
+    writeServerConfig(ns, config);
+    setAutomate(updatedAutomate);
 
     let intervalId;
-    if (config.isAutomated) {
+    if (updatedAutomate) {
       intervalId ??= setInterval(async () => {
-        const updatedConfig = await main(ns, currentConfig);
-        ns.tprint('automation running!!')
+        // ns.tprint('automation running!!')
+        const updatedConfig = await runAutomateScript(ns, currentConfig);
         setCurrentConfig(updatedConfig);
-        writeServerConfig(ns, currentConfig); // write to file in case of error
       }, 100000);
     } else {
-      clearInterval(intervalId);
+      // ns.tprint('automation stopped!!')
+      clearInterval(intervalId); 
       intervalId = null;
     }
   }
@@ -119,9 +115,9 @@ export function LoopHackDashboard({ ns, config }: {
 
         <Button
           id='automate'
-          style={{ backgroundColor: currentConfig.isAutomated ? 'green' : 'red' }}
+          style={{ backgroundColor: automate ? 'green' : 'red' }}
           name='Automate'
-          onClickFn={() => toggleAutomate(currentConfig)}
+          onClickFn={() => toggleAutomate()}
         />
       </body>
     </html>

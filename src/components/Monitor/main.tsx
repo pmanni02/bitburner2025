@@ -1,8 +1,10 @@
 import { NS } from "@ns";
 import { MonitorDetails } from "/interfaces";
-import { MonitorDashboard } from "./MonitorDashboard";
 import React from '/lib/react';
+import { MonitorDashboard } from "./MonitorDashboard";
 
+let LAST_SERVER_AMOUNT = 1;
+let CURRENT_AMOUNT: number | undefined = 1;
 
 /*eslint no-constant-condition: */
 export async function main(ns: NS, targetServer: string | undefined) {
@@ -19,7 +21,8 @@ export async function main(ns: NS, targetServer: string | undefined) {
   }
 
   ns.ui.openTail();
-  ns.ui.resizeTail(380, 130);
+  // ns.ui.resizeTail(150, 200); monitorV2
+  ns.ui.resizeTail(360, 120)
   ns.ui.moveTail(1200, 0)
   ns.ui.setTailTitle(serv + " monitor");
   ns.ui.setTailFontSize(10)
@@ -29,7 +32,10 @@ export async function main(ns: NS, targetServer: string | undefined) {
     ns.clearLog();
 
     ns.printRaw(
-      <MonitorDashboard monitorDetails={monitorDetails} />
+      <div>
+        <MonitorDashboard ns={ns} monitorDetails={monitorDetails} />
+        {/* <MonitorV2 monitorDetails={monitorDetails} /> */}
+      </div>
     )
     await ns.asleep(1000);
   }
@@ -59,6 +65,7 @@ export function getMonitorDetails(ns: NS, server: string): MonitorDetails {
 
   return {
     organizationName,
+    serverName: server,
     availableFunds,
     fundedPercent,
     hackedPercent,
@@ -72,13 +79,12 @@ export function getMonitorDetails(ns: NS, server: string): MonitorDetails {
 }
 
 function getRateOfChange(ns: NS, serverName: string) {
-  let lastServerAmount = 1;
-  const currentAmount = ns.getServer(serverName).moneyAvailable;
+  CURRENT_AMOUNT = ns.getServer(serverName).moneyAvailable;
 
   let rateOfChange = 0
-  if (currentAmount) {
-    rateOfChange = lastServerAmount - currentAmount;
-    lastServerAmount = currentAmount;
+  if (CURRENT_AMOUNT) {
+    rateOfChange = LAST_SERVER_AMOUNT - CURRENT_AMOUNT;
+    LAST_SERVER_AMOUNT = CURRENT_AMOUNT;
   }
 
   return rateOfChange;

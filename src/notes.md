@@ -27,6 +27,8 @@
     - add ability to move servers within cluster
 
 8. create monitorV2
+    - merge monitorUI and loopHackUI
+    - add buttons/toggles to hide/show server lists
     - add button to display chart showing earnings over time -> to track trends
       - write data to txt OR json file (append)
       - to create chart, read from file and use external chart library
@@ -37,11 +39,14 @@
 
 11. utilize ns.share() API to get bonus multiplier for reputation gain
 
+// COMMANDS
+1. Launch monitor for specific server -> eg: `run components/Monitor/main.js foodnstuff`
+2. Add custom buttons to Overview UI -> eg: `run index.js`
+3. Print coding contracts -> eg: `run helpers.js printCodingContracts`
+
 // MAIN BRANCHES
 1. master (main)
-2. loopHackV2 (UI and script updates to loopHack script)
-3. contracts (coding contract changes)
-4. clusterV1 (UI and scripts updates for cluster concept)
+2. contracts (coding contract changes)
 
 // INITIAL HACK SETUP
 [

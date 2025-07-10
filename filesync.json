@@ -3,7 +3,8 @@
     ".js",
     ".script",
     ".txt",
-    ".json"
+    ".json",
+    ".css"
   ],
   "allowDeletingFiles": true,
   "port": 12525,

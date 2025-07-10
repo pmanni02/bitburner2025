@@ -7,20 +7,6 @@ export async function main(ns: NS) {
   // const overviewHook1 = document.getElementById('overview-extra-hook-1');
   // const overviewHook2 = document.getElementById('overview-extra-hook-2');
 
-  // ns.atExit(() => {
-  //   if(overviewHook0) {
-  //     overviewHook0.innerHTML = ''
-  //   }
-
-  //   if(overviewHook1) {
-  //     overviewHook1.innerHTML = ''
-  //   }
-
-  //   if(overviewHook2) {
-  //     overviewHook2.innerHTML = ''
-  //   }
-  // })
-
   ReactDOM.render(
     <React.StrictMode>
       <App ns={ns} />
@@ -28,7 +14,11 @@ export async function main(ns: NS) {
     overviewHook0
   );
 
-  while (ns.scriptRunning("/index.js", "home")) {
-    await ns.asleep(1000)
+  if (overviewHook0) {
+    ns.atExit(() => {
+      ReactDOM.unmountComponentAtNode(overviewHook0);
+    });
   }
+
+  return new Promise(() => { ns.tprint('') });
 }
