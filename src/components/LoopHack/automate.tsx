@@ -15,13 +15,13 @@ import { FUNDED_PERCENT_THRESHOLD, growScriptPath, HACK_PERCENT_THRESHOLD, hackS
 //  - break down logic into smaller functions
 
 export async function main(ns: NS, config: LoopHackConfig): Promise<LoopHackConfig> {
-  ns.toast('Launching automated loop hack script!');
+  // ns.toast('Launching automated loop hack script!');
 
   const { weakenServers, hackServers, growServers, targetServer }: LoopHackConfig = config;
   const { fundedPercent, hackedPercent } = getMonitorDetails(ns, targetServer);
-  ns.tprint('monitoring ', targetServer);
-  ns.tprint('hacked: ', Number.parseInt(hackedPercent));
-  ns.tprint('funded: ', Number.parseInt(fundedPercent));
+  // ns.tprint('monitoring ', targetServer);
+  // ns.tprint('hacked: ', Number.parseInt(hackedPercent));
+  // ns.tprint('funded: ', Number.parseInt(fundedPercent));
 
   ns.tprint(hackServers, growServers, weakenServers)
 

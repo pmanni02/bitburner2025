@@ -1,11 +1,17 @@
+import { NS } from "@ns";
+import { getMonitorDetails } from "./main";
 import { MonitorDetails } from "/interfaces";
 import React from '/lib/react'
 
-export function MonitorDashboard({ monitorDetails }: {
+export function MonitorDashboard({ ns, monitorDetails }: {
+  ns: NS,
   monitorDetails: MonitorDetails
 }) {
+  const [details, setDetails] = React.useState(monitorDetails);
+
   const {
     organizationName,
+    serverName,
     availableFunds,
     fundedPercent,
     hackLevel,
@@ -15,7 +21,17 @@ export function MonitorDashboard({ monitorDetails }: {
     growTime,
     weakenTime,
     serverGrowth
-  } = monitorDetails;
+  } = details;
+
+  function updateConfig() {
+    const updatedDetails = getMonitorDetails(ns, serverName)
+    setDetails(updatedDetails);
+  }
+  
+  React.useEffect(() => {
+    const interval = setInterval(updateConfig, 10000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <div>

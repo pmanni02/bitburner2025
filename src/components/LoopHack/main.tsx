@@ -2,8 +2,10 @@ import { NS } from "@ns";
 import { copyAndExecScript, nukeServer, readServerConfig, writeServerConfig } from "../../utils/helpers";
 import { LoopHackConfig } from "../../interfaces";
 import { growScriptPath, weakenScriptPath, hackScriptPath } from "../../constants";
-import { LoopHackDashboard } from "./LoopHackDashboard";
-import React from '/lib/react'
+import React from '/lib/react';
+import { LoopHackV2 } from "./LoopHackV2";
+import { getMonitorDetails } from "../Monitor/main";
+import { MonitorDashboard } from "../Monitor/MonitorDashboard";
 
 /*eslint no-constant-condition: */
 
@@ -14,7 +16,7 @@ import React from '/lib/react'
 export async function main(ns: NS): Promise<void> {
   ns.toast('Launching loop hack script!')
   const args = ns.args;
-  const existingConfig: LoopHackConfig = readServerConfig(ns)[0]
+  const existingConfig: LoopHackConfig = readServerConfig(ns)[0];
 
   // INITIAL hack config with no augmentations
   let config: LoopHackConfig;
@@ -29,6 +31,7 @@ export async function main(ns: NS): Promise<void> {
   } else {
     config = existingConfig;
   }
+  config.isAutomated = false; // turn off automation on load
   ns.disableLog("ALL");
 
   // Run available executables against target server from home server
@@ -40,25 +43,23 @@ export async function main(ns: NS): Promise<void> {
   await deployInitialScript(ns, growScriptPath, growServers, targetServer);
   await deployInitialScript(ns, weakenScriptPath, weakenServers, targetServer);
 
-  // OPEN UI FOR MONITORING TARGET SERVER
-  if (!ns.getRunningScript("/components/Monitor/main.js", "home")) {
-    ns.exec("/components/Monitor/main.js", "home", undefined, targetServer);
-  }
-
   // OPEN UI TO LIST SEVERS & MANUALLY BALANCE SCRIPTS 
   await openHackUI(ns, config);
 }
 
 async function openHackUI(ns: NS, config: LoopHackConfig) {
   ns.ui.openTail();
-  ns.ui.resizeTail(360, 355);
+  ns.ui.resizeTail(390, 250); 
 
-  while (ns.scriptRunning("/components/LoopHack/main.js", "home")) {
-    ns.clearLog();
-    ns.printRaw(
-      <LoopHackDashboard ns={ns} config={config} />
-    );
-    await ns.asleep(3000);
+  const monitorDetails = getMonitorDetails(ns, config.targetServer)
+  ns.printRaw(
+    <div>
+      <MonitorDashboard ns={ns} monitorDetails={monitorDetails} />
+      <LoopHackV2 ns={ns} config={config} />
+    </div>
+  );
+  while (true) {
+    await ns.asleep(3000);  
   }
 }
 

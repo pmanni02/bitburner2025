@@ -15,6 +15,7 @@ export interface ServerFile {
 
 export interface MonitorDetails {
   organizationName: string,
+  serverName: string,
   availableFunds: string,
   fundedPercent: string,
   hackedPercent: string,
