@@ -6,8 +6,48 @@ import { growScriptPath, hackScriptPath, weakenScriptPath } from "/constants";
 import { Button } from "./Button";
 import { ServerDetails } from "./ServerDetails";
 import { main as runAutomateScript } from "./automate";
-import { writeServerConfig } from "/utils/helpers";
+import { readServerConfig, writeServerConfig } from "/utils/helpers";
 import { List } from "./List";
+import { useEffect } from "react";
+import { Collapsible } from "./Collapsible";
+
+// FIXME: move styles to external file or inline
+const styles = {
+  body: {
+    display: 'flex',
+    'flex-direction': 'column',
+  },
+  groups: {
+    display: 'flex',
+    // border: '1px solid pink',
+  },
+  box: {
+    display: 'flex',
+    'flex-direction': 'column',
+    border: '1px solid white',
+    padding: '2px',
+    width: '130px'
+  },
+  type: {
+    display: 'flex',
+    // border: '3px solid red',
+    // 'align-self': 'flex-end'
+    'justify-content': 'center',
+  },
+  buttonGroup: {
+    display: 'flex',
+    'justify-content': 'center',
+  },
+  serverList: {
+    display: 'flex',
+    'flex-direction': 'column',
+    // border: '3px solid green',
+  },
+  utilButtonGroup: {
+    display: 'flex',
+    'flex-wrap': 'wrap'
+  }
+}
 
 export function LoopHackV2({ ns, config }: {
   ns: NS,
@@ -15,13 +55,23 @@ export function LoopHackV2({ ns, config }: {
 }) {
   const [currentConfig, setCurrentConfig] = React.useState<LoopHackConfig>(config);
   const [automate, setAutomate] = React.useState<boolean>(config.isAutomated ? config.isAutomated : false);
+  // const [showServers, setShowServers] = React.useState<boolean>()
+
+  function updateConfig() {
+    const updatedConfig = readServerConfig(ns)[0];
+    setCurrentConfig(updatedConfig);
+  }
+
+  React.useEffect(() => {
+    const interval = setInterval(updateConfig, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   const toggleAutomate = () => {
     const updatedAutomate = !automate;
     config.isAutomated = updatedAutomate;
-    ns.tprint('config.isAutomated: ', config.isAutomated)
     writeServerConfig(ns, config);
-    setAutomate(updatedAutomate); 
+    setAutomate(updatedAutomate);
 
     let intervalId;
     if (updatedAutomate) {
@@ -41,92 +91,93 @@ export function LoopHackV2({ ns, config }: {
         <meta charSet="utf-8"></meta>
       </head>
       <body>
-        {/* <div id="hack">
-          <Button id='addHack' name='Add Hack' onClickFn={
-            () => {
-              const updatedConfig = replaceScript(ns, growScriptPath, hackScriptPath, config);
-              setCurrentConfig(updatedConfig)
-            }}
-          />
-          <ServerDetails ns={ns} config={config} serverNames={currentConfig.hackServers} summary="Hack Servers: " />
-        </div> */}
 
-        <div className="growModal" >
-          <div id="addRemoveButtons">
-            <button id='add'>+</button>
-
-            <button id='remove'>-</button>
+        <div style={styles.groups}>
+          <div style={styles.box}>
+            <div style={styles.buttonGroup}>
+              <button onClick={() => {
+                const updatedConfig = replaceScript(ns, growScriptPath, hackScriptPath, config);
+                setCurrentConfig(updatedConfig)
+              }}>+</button>
+            </div>
+            <Collapsible ns={ns} config={currentConfig} label="HACK" servers={currentConfig.hackServers} />
           </div>
-          <p id="growHover">GROW</p>
-          <p id="hide"><List ns={ns} config={config} serverNames={currentConfig.growServers} /></p>
-          {/* <ServerDetails ns={ns} config={config} serverNames={currentConfig.growServers} summary="Grow" /> */}
 
-          {/* <Button id='addGrow' name='Add Grow' onClickFn={
-            () => {
-              const updatedConfig = replaceScript(ns, hackScriptPath, growScriptPath, config);
+          <div style={styles.box}>
+            <div style={styles.buttonGroup}>
+              <Button id='addGrow' name='+' onClickFn={
+                () => {
+                  const updatedConfig = replaceScript(ns, hackScriptPath, growScriptPath, config);
+                  setCurrentConfig(updatedConfig)
+                }
+              }
+              />
+            </div>
+            <Collapsible ns={ns} config={currentConfig} label="GROW" servers={currentConfig.growServers} />
+          </div>
+
+          <div style={styles.box}>
+            <div style={styles.buttonGroup}>
+              <Button id='addWeaken' name='+' onClickFn={
+                () => {
+                  const updatedConfig = replaceScript(ns, growScriptPath, weakenScriptPath, config);
+                  setCurrentConfig(updatedConfig)
+                }
+              } />
+              <Button id='removeWeaken' name='-' onClickFn={
+                () => {
+                  const updatedConfig = replaceScript(ns, weakenScriptPath, growScriptPath, config);
+                  setCurrentConfig(updatedConfig)
+                }
+              } />
+            </div>
+            <Collapsible ns={ns} config={currentConfig} label="WEAKEN" servers={currentConfig.weakenServers} />
+          </div>
+        </div>
+
+        <br></br>
+
+        <div style={styles.utilButtonGroup}>
+          <Button id='buyServer' name='Buy Server' onClickFn={
+            async () => {
+              const updatedConfig = await buyNewServer(ns, currentConfig)
               setCurrentConfig(updatedConfig)
             }
-          }
+          } />
+          <Button id='upgradeServer' name='Upgrade Server' onClickFn={
+            async () => {
+              const updatedConfig = await upgradePurchasedServer(ns, currentConfig)
+              setCurrentConfig(updatedConfig)
+            }
+          } />
+
+          <br></br>
+          <Button id='addServer' name='Add Server' onClickFn={
+            async () => {
+              const updatedConfig = await addNewServer(ns, currentConfig)
+              if (updatedConfig) {
+                setCurrentConfig(updatedConfig)
+              }
+            }
+          } />
+
+          <Button id='changeTarget' name='Change Target' onClickFn={
+            async () => {
+              const updatedConfig = await changeTargetServer(ns, currentConfig)
+              if (updatedConfig) {
+                setCurrentConfig(updatedConfig)
+              }
+            }
+          } />
+
+          <Button
+            id='automate'
+            style={{ backgroundColor: automate ? 'green' : 'red' }}
+            name='Automate'
+            onClickFn={() => toggleAutomate()}
           />
-          <ServerDetails ns={ns} config={config} serverNames={currentConfig.growServers} summary="Grow Servers: " /> */}
         </div>
 
-        {/* <div id="weaken">
-          <Button id='addWeaken' name='Add Weaken' onClickFn={
-            () => {
-              const updatedConfig = replaceScript(ns, growScriptPath, weakenScriptPath, config);
-              setCurrentConfig(updatedConfig)
-            }
-          } />
-          <Button id='removeWeaken' name='Remove Weaken' onClickFn={
-            () => {
-              const updatedConfig = replaceScript(ns, weakenScriptPath, growScriptPath, config);
-              setCurrentConfig(updatedConfig)
-            }
-          } />
-          <ServerDetails ns={ns} config={config} serverNames={currentConfig.weakenServers} summary="Weaken Servers: " />
-        </div>
-
-        <br></br>
-
-        <Button id='buyServer' name='Buy Server' onClickFn={
-          async () => {
-            const updatedConfig = await buyNewServer(ns, currentConfig)
-            setCurrentConfig(updatedConfig)
-          }
-        } />
-        <Button id='upgradeServer' name='Upgrade Server' onClickFn={
-          async () => {
-            const updatedConfig = await upgradePurchasedServer(ns, currentConfig)
-            setCurrentConfig(updatedConfig)
-          }
-        } />
-
-        <br></br>
-        <Button id='addServer' name='Add Server' onClickFn={
-          async () => {
-            const updatedConfig = await addNewServer(ns, currentConfig)
-            if (updatedConfig) {
-              setCurrentConfig(updatedConfig)
-            }
-          }
-        } />
-
-        <Button id='changeTarget' name='Change Target' onClickFn={
-          async () => {
-            const updatedConfig = await changeTargetServer(ns, currentConfig)
-            if (updatedConfig) {
-              setCurrentConfig(updatedConfig)
-            }
-          }
-        } />
-
-        <Button
-          id='automate'
-          style={{ backgroundColor: automate ? 'green' : 'red' }}
-          name='Automate'
-          onClickFn={() => toggleAutomate()}
-        /> */}
       </body>
     </html>
   )

@@ -2,8 +2,10 @@ import { NS } from "@ns";
 import { copyAndExecScript, nukeServer, readServerConfig, writeServerConfig } from "../../utils/helpers";
 import { LoopHackConfig } from "../../interfaces";
 import { growScriptPath, weakenScriptPath, hackScriptPath } from "../../constants";
-import { LoopHackDashboard } from "./LoopHackDashboard";
 import React from '/lib/react';
+import { LoopHackV2 } from "./LoopHackV2";
+import { getMonitorDetails } from "../Monitor/main";
+import { MonitorDashboard } from "../Monitor/MonitorDashboard";
 
 /*eslint no-constant-condition: */
 
@@ -41,28 +43,23 @@ export async function main(ns: NS): Promise<void> {
   await deployInitialScript(ns, growScriptPath, growServers, targetServer);
   await deployInitialScript(ns, weakenScriptPath, weakenServers, targetServer);
 
-  // OPEN UI FOR MONITORING TARGET SERVER
-  if (!ns.getRunningScript("/components/Monitor/main.js", "home")) {
-    ns.exec("/components/Monitor/main.js", "home", undefined, targetServer);
-  }
-
   // OPEN UI TO LIST SEVERS & MANUALLY BALANCE SCRIPTS 
   await openHackUI(ns, config);
 }
 
 async function openHackUI(ns: NS, config: LoopHackConfig) {
   ns.ui.openTail();
-  ns.ui.resizeTail(360, 355);
+  ns.ui.resizeTail(390, 250); 
 
-  while (ns.scriptRunning("/components/LoopHack/main.js", "home")) {
-    ns.clearLog();
-    ns.printRaw(
-      <div>
-        <LoopHackDashboard ns={ns} config={config} />
-        {/* <LoopHackV2 ns={ns} config={config} /> */}
-      </div>
-    );
-    await ns.asleep(3000);
+  const monitorDetails = getMonitorDetails(ns, config.targetServer)
+  ns.printRaw(
+    <div>
+      <MonitorDashboard ns={ns} monitorDetails={monitorDetails} />
+      <LoopHackV2 ns={ns} config={config} />
+    </div>
+  );
+  while (true) {
+    await ns.asleep(3000);  
   }
 }
 

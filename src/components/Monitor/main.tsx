@@ -2,6 +2,7 @@ import { NS } from "@ns";
 import { MonitorDetails } from "/interfaces";
 import React from '/lib/react';
 import { MonitorV2 } from "./MonitorV2";
+import { MonitorDashboard } from "./MonitorDashboard";
 
 let LAST_SERVER_AMOUNT = 1;
 let CURRENT_AMOUNT: number | undefined = 1;
@@ -21,7 +22,8 @@ export async function main(ns: NS, targetServer: string | undefined) {
   }
 
   ns.ui.openTail();
-  ns.ui.resizeTail(150, 200);
+  // ns.ui.resizeTail(150, 200); monitorV2
+  ns.ui.resizeTail(360, 120)
   ns.ui.moveTail(1200, 0)
   ns.ui.setTailTitle(serv + " monitor");
   ns.ui.setTailFontSize(10)
@@ -32,7 +34,8 @@ export async function main(ns: NS, targetServer: string | undefined) {
 
     ns.printRaw(
       <div>
-        <MonitorV2 monitorDetails={monitorDetails} />
+        <MonitorDashboard ns={ns} monitorDetails={monitorDetails} />
+        {/* <MonitorV2 monitorDetails={monitorDetails} /> */}
       </div>
     )
     await ns.asleep(1000);
@@ -63,6 +66,7 @@ export function getMonitorDetails(ns: NS, server: string): MonitorDetails {
 
   return {
     organizationName,
+    serverName: server,
     availableFunds,
     fundedPercent,
     hackedPercent,
