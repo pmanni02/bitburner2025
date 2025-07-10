@@ -39,6 +39,11 @@
 
 11. utilize ns.share() API to get bonus multiplier for reputation gain
 
+// COMMANDS
+1. Launch monitor for specific server -> eg: `run components/Monitor/main.js foodnstuff`
+2. Add custom buttons to Overview UI -> eg: `run index.js`
+3. Print coding contracts -> eg: `run helpers.js printCodingContracts`
+
 // MAIN BRANCHES
 1. master (main)
 2. contracts (coding contract changes)

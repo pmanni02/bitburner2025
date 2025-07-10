@@ -1,7 +1,6 @@
 import { NS } from "@ns";
 import { MonitorDetails } from "/interfaces";
 import React from '/lib/react';
-import { MonitorV2 } from "./MonitorV2";
 import { MonitorDashboard } from "./MonitorDashboard";
 
 let LAST_SERVER_AMOUNT = 1;

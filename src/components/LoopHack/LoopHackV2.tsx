@@ -4,11 +4,8 @@ import { LoopHackConfig } from "../../interfaces";
 import { addNewServer, buyNewServer, changeTargetServer, replaceScript, upgradePurchasedServer } from "/utils/servers";
 import { growScriptPath, hackScriptPath, weakenScriptPath } from "/constants";
 import { Button } from "./Button";
-import { ServerDetails } from "./ServerDetails";
 import { main as runAutomateScript } from "./automate";
 import { readServerConfig, writeServerConfig } from "/utils/helpers";
-import { List } from "./List";
-import { useEffect } from "react";
 import { Collapsible } from "./Collapsible";
 
 // FIXME: move styles to external file or inline
@@ -19,7 +16,6 @@ const styles = {
   },
   groups: {
     display: 'flex',
-    // border: '1px solid pink',
   },
   box: {
     display: 'flex',
@@ -30,8 +26,6 @@ const styles = {
   },
   type: {
     display: 'flex',
-    // border: '3px solid red',
-    // 'align-self': 'flex-end'
     'justify-content': 'center',
   },
   buttonGroup: {
@@ -41,7 +35,6 @@ const styles = {
   serverList: {
     display: 'flex',
     'flex-direction': 'column',
-    // border: '3px solid green',
   },
   utilButtonGroup: {
     display: 'flex',
@@ -55,7 +48,6 @@ export function LoopHackV2({ ns, config }: {
 }) {
   const [currentConfig, setCurrentConfig] = React.useState<LoopHackConfig>(config);
   const [automate, setAutomate] = React.useState<boolean>(config.isAutomated ? config.isAutomated : false);
-  // const [showServers, setShowServers] = React.useState<boolean>()
 
   function updateConfig() {
     const updatedConfig = readServerConfig(ns)[0];
@@ -105,31 +97,31 @@ export function LoopHackV2({ ns, config }: {
 
           <div style={styles.box}>
             <div style={styles.buttonGroup}>
-              <Button id='addGrow' name='+' onClickFn={
+              <button onClick={
                 () => {
                   const updatedConfig = replaceScript(ns, hackScriptPath, growScriptPath, config);
                   setCurrentConfig(updatedConfig)
                 }
-              }
-              />
+              }>+
+              </button>
             </div>
             <Collapsible ns={ns} config={currentConfig} label="GROW" servers={currentConfig.growServers} />
           </div>
 
           <div style={styles.box}>
             <div style={styles.buttonGroup}>
-              <Button id='addWeaken' name='+' onClickFn={
+              <button id='addWeaken' onClick={
                 () => {
                   const updatedConfig = replaceScript(ns, growScriptPath, weakenScriptPath, config);
                   setCurrentConfig(updatedConfig)
                 }
-              } />
-              <Button id='removeWeaken' name='-' onClickFn={
+              }>+</button>
+              <button id='removeWeaken' onClick={
                 () => {
                   const updatedConfig = replaceScript(ns, weakenScriptPath, growScriptPath, config);
                   setCurrentConfig(updatedConfig)
                 }
-              } />
+              }>-</button>
             </div>
             <Collapsible ns={ns} config={currentConfig} label="WEAKEN" servers={currentConfig.weakenServers} />
           </div>
@@ -138,44 +130,43 @@ export function LoopHackV2({ ns, config }: {
         <br></br>
 
         <div style={styles.utilButtonGroup}>
-          <Button id='buyServer' name='Buy Server' onClickFn={
+          <button id='buyServer' onClick={
             async () => {
               const updatedConfig = await buyNewServer(ns, currentConfig)
               setCurrentConfig(updatedConfig)
             }
-          } />
-          <Button id='upgradeServer' name='Upgrade Server' onClickFn={
+          }>Buy Server</button>
+
+          <button id='upgradeServer' onClick={
             async () => {
               const updatedConfig = await upgradePurchasedServer(ns, currentConfig)
               setCurrentConfig(updatedConfig)
             }
-          } />
+          }>Upgrade Server</button>
 
           <br></br>
-          <Button id='addServer' name='Add Server' onClickFn={
+
+          <button id='addServer' onClick={
             async () => {
               const updatedConfig = await addNewServer(ns, currentConfig)
               if (updatedConfig) {
                 setCurrentConfig(updatedConfig)
               }
             }
-          } />
+          }>Add Server</button>
 
-          <Button id='changeTarget' name='Change Target' onClickFn={
+          <button id='changeTarget' onClick={
             async () => {
               const updatedConfig = await changeTargetServer(ns, currentConfig)
               if (updatedConfig) {
                 setCurrentConfig(updatedConfig)
               }
             }
-          } />
+          }>Change Target</button>
 
-          <Button
-            id='automate'
-            style={{ backgroundColor: automate ? 'green' : 'red' }}
-            name='Automate'
-            onClickFn={() => toggleAutomate()}
-          />
+          <button id='automate' style={{ backgroundColor: automate ? 'green' : 'red' }} onClick={
+            () => toggleAutomate()
+          }>Automate</button>
         </div>
 
       </body>
