@@ -1,4 +1,4 @@
-import { NS, Server } from "@ns";
+import { CodingContractObject, NS, Server } from "@ns";
 import { LoopHackConfig, ServerFile } from "../interfaces";
 import { BASIC_SCRIPT_RAM_SIZE, growScriptPath, hackScriptPath, weakenScriptPath } from "/constants";
 
@@ -245,13 +245,13 @@ async function printCodingContracts(ns: NS) {
       });
       if (codingContracts.length > 0) { ns.tprint(server.hostname) }
       codingContracts.forEach((contract) => {
-        const codingContractDetails = ns.codingcontract.getContract(contract, server.hostname);
+        const codingContractDetails: CodingContractObject = ns.codingcontract.getContract(contract, server.hostname);
         if (contractNameFilter && codingContractDetails.type === contractNameFilter) {
-          ns.tprint(" -", codingContractDetails.type);
+          ns.tprint(` -${codingContractDetails.type} (${contract})`);
         }
         if (!contractNameFilter) {
-          ns.tprint(" -", codingContractDetails.type)
-        }
+          ns.tprint(" -", codingContractDetails.type);
+        } 
       });
     });
   }
