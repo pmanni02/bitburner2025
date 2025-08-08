@@ -1,5 +1,5 @@
 import { NS, Server } from "@ns";
-import { ServerFile } from "./interfaces/global";
+import { ServerFile } from "./interfaces";
 
 /**
  * @param ns @param {AutocompleteData} data
