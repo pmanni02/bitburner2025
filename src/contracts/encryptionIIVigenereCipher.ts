@@ -27,6 +27,44 @@
 // If your solution is an empty string, you must leave the text box empty. Do not use "", '', or ``.
 
 import { NS } from "@ns";
+
+const alphabet: string[] = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 export async function main(ns: NS): Promise<void> {
-  //
+  const plaintext = 'MODEMMOUSEEMAILARRAYLOGIN';
+  const keyword = 'MONITOR'
+
+  // create function to return character given row and column (as numbers, ie: 0 through 26) => get cipher letter
+  // iterate through plaintext and keyword characters and get cipher letter
+
+  let keywordIndex = 0;
+  const cipherText = []
+  for (let i = 0; i < plaintext.length; i++) {
+    if (keywordIndex >= keyword.length) {
+      keywordIndex = 0;
+    }
+
+    const row = plaintext[i];
+    const col = keyword[keywordIndex];
+
+    const cipherChar = getCipherLetter(row, col)
+    cipherText.push(cipherChar)
+    keywordIndex++;
+  }
+  ns.tprint(`ciperText: ${cipherText.join('')}`)
 }
+
+function getCipherLetter(row: string, col: string) {
+  const rowIndex = alphabet.indexOf(row);
+  let rotated = alphabet;
+  if (rowIndex > 0) {
+    rotated = alphabet.slice(rowIndex).concat(alphabet.slice(0, rowIndex));
+  }
+
+  const index = alphabet.indexOf(col)
+  const cipherChar = rotated[index];
+  return cipherChar
+}
+
+// ATTEMPTS:
+// 1. ["CLOUDDEBUGTRASHLOGICFRAME", "TERMINAL"] -> VPFGLQEMNKKDIFHWHKZONEAXX (correct)
+// 2. ["MODEMMOUSEEMAILARRAYLOGIN", "MONITOR"] -> YCQMFAFGGRMFOZXOEZTMCAUVV (correct)
