@@ -23,46 +23,31 @@
 
 import { NS } from "@ns";
 export async function main(ns: NS): Promise<void> {
-  // split input string into array
-  // create separate groups by character (case sensitive)
-  //   grab up to 10 of the same character -> compress and add to final string
-  // return final compressed string
-  const input = 'aAaAaA';
-  // eg:
-  // aaaaabccc
-  // starting with index 0, find index where final 'a' occurs -> 4
-  // the diff + 1 between start and end is 5 -> 5a
-  // bccc
-  // starting with index 0, find index where final 'b' occurs -> 0
-  // the diff + 1 between start and end is 1 -> 1b
-  // ccc
-  // starting with index 0, find index where final 'c' occurs -> 2
-  // the diff + 1 between start and end is 3 -> 3c
+  const input = 'yyyyyllxCCCCCCCCCyyyyyyyyRR3QQQQQQQQQQQQffffffbTTcccggppEEEnPUkkWWeeOqqWWWWWWWWWW2';
+
   let compressedFinal = ''
   const inputArray = input.split('');
   while (inputArray.length > 0) {
-    ns.tprint('input array: ', inputArray);
     const charChunkIndex = inputArray.findIndex((char, i) => {
       return inputArray[i + 1] != char
     });
-    ns.tprint('charChunkIndex: ', charChunkIndex);
 
     let compressedVal;
     if (charChunkIndex < 9) {
       compressedVal = `${charChunkIndex + 1}${inputArray[0]}`;
-      ns.tprint('compressedVal: ', compressedVal);
-      compressedFinal = compressedFinal.concat(compressedVal);
       inputArray.splice(0, charChunkIndex + 1);
     } else {
       compressedVal = `9${inputArray[0]}`;
-      ns.tprint('compressedVal: ', compressedVal);
-      compressedFinal = compressedFinal.concat(compressedVal)
       inputArray.splice(0, 9);
     }
-    // ns.tprint('compressedVal: ', compressedVal);
-    // compressedFinal = compressedFinal.concat(compressedVal)
-
+    compressedFinal = compressedFinal.concat(compressedVal);
 
     ns.tprint('compressedFinal: ', compressedFinal);
   }
 }
+
+// ATTEMPTS: 
+// 1. wWW4wwGGGGGGGGGGGGeeeeeeeeeee1111111uWW3OOMM667733TuuuuuuuuuuuuuBBaaAAommffhhhhhhhQQMc -> 
+//  1w2W142w9G3G9e2e711u2W132O2M2627231T9u4u2B2a2A1o2m2f7h2Q1M1c
+// 2. yyyyyllxCCCCCCCCCyyyyyyyyRR3QQQQQQQQQQQQffffffbTTcccggppEEEnPUkkWWeeOqqWWWWWWWWWW2 ->
+//  5y2l1x9C8y2R139Q3Q6f1b2T3c2g2p3E1n1P1U2k2W2e1O2q9W1W12 -> correct
